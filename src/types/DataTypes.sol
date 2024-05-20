@@ -4,11 +4,11 @@ pragma solidity >=0.8.19;
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @notice Namespace for the structs used in the options contracts
-library OrderBook {
+library OrderBookLib {
     /// @notice Struct defining vanilla option
-    struct VanillaOption {
-
-    }
+//    struct VanillaOption {
+//
+//    }
 
     /// @notice Enum representing the different types of option.
     /// @custom:value0 PUT Stream created but not started; assets are in a pending state.

@@ -4,8 +4,8 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import { Strings } from "@openzeppelin/contracts/utils/Strings.sol";
 
-import { console2 } from "forge-std/src/console2.sol";
-import { Script } from "forge-std/src/Script.sol";
+import { console2 } from "forge-std/console2.sol";
+import { Script } from "forge-std/Script.sol";
 
 contract BaseScript is Script {
     using Strings for uint256;
