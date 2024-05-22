@@ -44,28 +44,12 @@ abstract contract Base_Test is Test, Assertions, Constants {
             alice: createUser("Alice"),
             broker: createUser("Broker")
         });
-//        // Deploy the defaults contract.
-//        defaults = new Defaults();
-//        defaults.setAsset(dai);
-//        defaults.setUsers(users);
-
-        // Warp to May 1, 2023 at 00:00 GMT to provide a more realistic testing environment.
-//        vm.warp({ timestamp: MAY_1_2027 });
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                       HELPERS
     //////////////////////////////////////////////////////////////////////////*/
-
-    /// @dev Approves all V2 Core contracts to spend assets from the Sender, Recipient, Alice and Eve.
-    function approveProtocol() internal {
-//        changePrank({ msgSender: users.alice });
-//        dai.approve({ spender: address(lockupLinear), amount: MAX_UINT256 });
-
-        // Finally, change the active prank back to the Admin.
-        changePrank({ msgSender: users.admin });
-    }
-
+    
     /// @dev Generates a user, labels its address, and funds it with test assets.
     function createUser(string memory name) internal returns (address payable) {
         address payable user = payable(makeAddr(name));

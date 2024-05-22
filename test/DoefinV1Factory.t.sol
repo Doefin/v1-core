@@ -34,11 +34,20 @@ contract DoefinV1Factory_Test is Base_Test {
         factory.removeTokenFromApprovedList(address(dai));
     }
 
-    function test_CreateOrderBook() public {
-        uint8 preorderBookId = factory.getOrderBookIdCounter();
-        address orderBookAddress = factory.createOrderBook();
+    function test_AddTokenToApproveList() public {
+        vm.expectEmit();
+        emit IDoefinFactory.AddTokenToApprovedList(address(dai));
+        factory.addTokenToApprovedList(address(dai));
+    }
 
-        assertEq(factory.getOrderBookIdCounter(), preorderBookId + 1);
-        assertEq(factory.getOrderBookAddress(1), orderBookAddress);
+    function test_RemoveTokenFromApproveList() public {
+        vm.expectEmit();
+        emit IDoefinFactory.RemoveTokenFromApprovedList(address(dai));
+        factory.removeTokenFromApprovedList(address(dai));
+    }
+
+    function test_CreateOrderBook() public {
+        address orderBookAddress = factory.createOrderBook();
+        assertEq(factory.getOrderBook(orderBookAddress).orderBookAddress, orderBookAddress);
     }
 }
