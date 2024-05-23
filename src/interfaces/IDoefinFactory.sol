@@ -12,10 +12,6 @@ interface IDoefinFactory {
     /*//////////////////////////////////////////////////////////////////////////
                                        EVENTS
     //////////////////////////////////////////////////////////////////////////*/
-    /// @notice Event emitted when the owner is changed
-    /// @param owner Address of the new owner
-    event OwnerChanged(address indexed owner);
-
     /// @notice Event emitted when a new order book is created
     /// @param orderBookAddress The address of the new order book
     event OrderBookCreated (
