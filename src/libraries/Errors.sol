@@ -8,12 +8,15 @@ import { IERC721Metadata } from "@openzeppelin/contracts/token/ERC721/extensions
 /// @notice Library containing all custom errors the protocol may revert with.
 library Errors {
     /*//////////////////////////////////////////////////////////////////////////
-                                      GENERICS
+                                         GENERICS
     //////////////////////////////////////////////////////////////////////////*/
-
-    /// @notice Thrown when `msg.sender` is not the admin.
-    error CallerNotAdmin(address admin, address caller);
-
     /// @notice Thrown when trying to delegate call to a function that disallows delegate calls.
     error DelegateCall();
+
+    /// @notice Thrown when address zero is used
+    error ZeroAddress();
+
+    /*//////////////////////////////////////////////////////////////////////////
+                                          FACTORY
+    //////////////////////////////////////////////////////////////////////////*/
 }

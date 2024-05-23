@@ -16,6 +16,6 @@ contract DeployDeterministicCore is BaseScript {
         returns (DoefinV1Factory factory)
     {
         bytes32 salt = constructCreate2Salt();
-        factory = new DoefinV1Factory{ salt: salt }(initialAdmin);
+        factory = new DoefinV1Factory{ salt: salt }();
     }
 }
