@@ -17,27 +17,35 @@ contract DoefinV1Factory is IDoefinFactory, Ownable {
     mapping(address => bool) public approvedTokensList;
     mapping(address => OrderBook) public orderBooks;
 
-
     /*//////////////////////////////////////////////////////////////////////////
                                      CONSTRUCTOR
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @dev Initializes the factor and it's owner contract
-    constructor() Ownable() {}
+    constructor() Ownable() { }
 
     /*//////////////////////////////////////////////////////////////////////////
                          USER-FACING NON-CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
     //@@inheritdoc IDoefinFactory
-    function createOrderBook() external override onlyOwner returns(address orderBookAddress) {
-        orderBookAddress = address (new DoefinV1OrderBook());
+    function createOrderBook(
+        address strikeToken,
+        uint256 minStrikeAmount
+    )
+        external
+        override
+        onlyOwner
+        returns (address orderBookAddress)
+    {
+        orderBookAddress = address(new DoefinV1OrderBook(strikeToken, minStrikeAmount));
         orderBooks[orderBookAddress] = OrderBook(orderBookAddress);
         emit OrderBookCreated(orderBookAddress);
+        return orderBookAddress;
     }
 
     //@@inheritdoc
     function addTokenToApprovedList(address token) external override onlyOwner {
-        if(token == address(0)) {
+        if (token == address(0)) {
             revert Errors.ZeroAddress();
         }
 
@@ -47,7 +55,7 @@ contract DoefinV1Factory is IDoefinFactory, Ownable {
 
     //@@inheritdoc
     function removeTokenFromApprovedList(address token) external override onlyOwner {
-        if(token == address(0)) {
+        if (token == address(0)) {
             revert Errors.ZeroAddress();
         }
 

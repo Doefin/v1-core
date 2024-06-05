@@ -17,7 +17,7 @@ contract DoefinV1Factory_Test is Base_Test {
         vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(users.alice);
-        factory.createOrderBook();
+        factory.createOrderBook(address(dai), 10);
     }
 
     function test_AddTokenToApproveList_NotOwner() public {
@@ -47,7 +47,7 @@ contract DoefinV1Factory_Test is Base_Test {
     }
 
     function test_CreateOrderBook() public {
-        address orderBookAddress = factory.createOrderBook();
+        address orderBookAddress = factory.createOrderBook(address(dai), 10);
         assertEq(factory.getOrderBook(orderBookAddress).orderBookAddress, orderBookAddress);
     }
 }

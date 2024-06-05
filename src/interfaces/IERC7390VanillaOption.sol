@@ -16,9 +16,18 @@ interface IERC7390VanillaOption {
     }
 
     /**
+     * @dev Side of the option.
+     */
+    enum Position {
+        Long,
+        Short
+    }
+
+    /**
      * @dev Struct to store essential details about a vanilla option.
      * @param side The side of the option. Can take the value Call or Put
-     * @param strike The strike price of the option in terms of the strike token.
+     * @param position The position of the option. Can take the value Long or Short
+     * @param strike The strike value of the option in terms of the strike token.
      * @param amount The amount of the underlying asset that the option covers.
      * @param premium The premium price paid by the option holder to the writer.
      * @param exerciseWindowStart The timestamp from when the option can start to be exercised.
@@ -31,6 +40,7 @@ interface IERC7390VanillaOption {
      */
     struct VanillaOptionData {
         Side side;
+        Position position;
         uint256 strike;
         uint256 amount;
         uint256 premium;
@@ -73,12 +83,17 @@ interface IERC7390VanillaOption {
     /// @notice Error thrown when the caller has insufficient balance to perform the action.
     error InsufficientBalance();
 
-
     // Events
 
     /// @notice Emitted when a new option is created.
     /// @param id The unique identifier of the created option.
-    event Created(uint256 indexed id);
+    event OrderCreated(uint256 indexed id);
+
+    /// @notice Emitted when a new option order is matched.
+    /// @param id The unique identifier of the created option.
+    /// @param counterparty The address of the counterparty
+    /// @param amount The amount the counter party submitted
+    event OrderMatched(uint256 indexed id, address indexed counterparty, uint256 indexed amount);
 
     /// @notice Emitted when an option is bought.
     /// @param id The unique identifier of the option being bought.
@@ -89,7 +104,7 @@ interface IERC7390VanillaOption {
     /// @notice Emitted when an option is exercised.
     /// @param id The unique identifier of the option being exercised.
     /// @param amount The amount of the option exercised.
-    event Exercised(uint256 indexed id, uint256 amount);
+    event OrderExercised(uint256 indexed id, uint256 amount);
 
     /// @notice Emitted when the tokens from an expired option are retrieved by the writer.
     /// @param id The unique identifier of the option that has expired.
@@ -109,7 +124,6 @@ interface IERC7390VanillaOption {
     /// @param allowed The new list of addresses that are allowed to buy the option.
     event AllowedUpdated(uint256 indexed id, address[] allowed);
 
-
     // Interface methods
 
     /**
@@ -119,7 +133,7 @@ interface IERC7390VanillaOption {
      * @param optionData The details of the option being created, including type, underlying, amounts, and time frames.
      * @return The unique identifier for the newly created option contract.
      */
-    function create(VanillaOptionData calldata optionData) external returns (uint256);
+    function create(VanillaOptionData memory optionData) external returns (uint256);
 
     /**
      * @notice Buys a specified amount of an existing option.
@@ -178,5 +192,4 @@ interface IERC7390VanillaOption {
      * @return The details of the option issuance in the form of the OptionIssuance struct.
      */
     function issuance(uint256 id) external view returns (OptionIssuance memory);
-
 }

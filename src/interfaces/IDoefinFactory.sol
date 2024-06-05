@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19;
 
-
 /// @title IDoefinFactory
 /// @notice This interface defines the important functions to setup the DeofinV1 OrderBook
 interface IDoefinFactory {
@@ -14,9 +13,7 @@ interface IDoefinFactory {
     //////////////////////////////////////////////////////////////////////////*/
     /// @notice Event emitted when a new order book is created
     /// @param orderBookAddress The address of the new order book
-    event OrderBookCreated (
-        address indexed orderBookAddress
-    );
+    event OrderBookCreated(address indexed orderBookAddress);
 
     /// @notice Emitted when the token is added to approved list
     event AddTokenToApprovedList(address indexed token);
@@ -29,7 +26,7 @@ interface IDoefinFactory {
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @notice Creates a new orderBook
-    function createOrderBook() external returns (address);
+    function createOrderBook(address strikeToken, uint256 minStrikeAmount) external returns (address);
 
     /// @notice Updates the token approved list
     /// @param token Token to add to the approved list
