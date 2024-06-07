@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity >=0.8.19;
 
-import "forge-std/Console.sol";
 import { Base_Test } from "./Base.t.sol";
 import { Test } from "forge-std/Test.sol";
 import { DoefinV1OrderBook } from "../src/DoefinV1OrderBook.sol";

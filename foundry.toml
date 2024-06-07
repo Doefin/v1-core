@@ -18,6 +18,11 @@
   solc = "0.8.23"
   src = "src"
   test = "test"
+  remappings = [
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "@prb/math/=lib/prb-math/",
+    "forge-std/=lib/forge-std/src"
+  ]
 
 [profile.default.fuzz]
   max_test_rejects = 1_000_000 # Number of times `vm.assume` can fail
