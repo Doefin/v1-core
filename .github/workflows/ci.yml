@@ -1,4 +1,8 @@
-name: "Lint a Forge project"
+name: "CI"
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{github.workflow}}-${{github.ref}}
 
 on:
   workflow_dispatch:
