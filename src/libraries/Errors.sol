@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19;
 
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -43,4 +43,10 @@ library Errors {
 
     /// @notice Thrown when the sender is not allowed to match an order
     error OrderBook_MatchOrderNotAllowed();
+
+    /// @notice Thrown when the token owner tries to transfer their token
+    error OrderBook_OptionTokenTransferNotAllowed();
+
+    /// @notice Thrown when the order is not settled
+    error OrderBook_OrderNotSettled();
 }

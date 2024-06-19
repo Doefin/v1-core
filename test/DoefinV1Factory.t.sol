@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19;
 
 import { Base_Test } from "./Base.t.sol";
@@ -16,7 +16,14 @@ contract DoefinV1Factory_Test is Base_Test {
         vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(users.alice);
-        factory.createOrderBook(address(dai), 10);
+        factory.createOrderBook(address(dai), 10, address(1));
+    }
+
+    function test_CreateOptionsManager_NotOwner() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+
+        vm.prank(users.alice);
+        factory.createOptionsManager(address(1), address(1));
     }
 
     function test_AddTokenToApproveList_NotOwner() public {
@@ -45,8 +52,17 @@ contract DoefinV1Factory_Test is Base_Test {
         factory.removeTokenFromApprovedList(address(dai));
     }
 
-    function test_CreateOrderBook() public {
-        address orderBookAddress = factory.createOrderBook(address(dai), 10);
+    function test_CreateOrderBook(address strikeToken, uint256 minStrikeAmount, address optionsManager) public {
+        vm.assume(minStrikeAmount != 0);
+        vm.assume(strikeToken != address(0));
+        vm.assume(optionsManager != address(0));
+
+        address orderBookAddress = factory.createOrderBook(strikeToken, minStrikeAmount, optionsManager);
         assertEq(factory.getOrderBook(orderBookAddress).orderBookAddress, orderBookAddress);
+    }
+
+    function test_CreateOptionsManager(address orderBook, address blockHeaderOracle) public {
+        address optionsManagerAddress = factory.createOptionsManager(orderBook, blockHeaderOracle);
+        assertNotEq(optionsManagerAddress, address(0));
     }
 }

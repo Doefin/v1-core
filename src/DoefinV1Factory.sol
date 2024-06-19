@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19;
 
 import { Errors } from "./libraries/Errors.sol";
@@ -7,6 +7,7 @@ import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./DoefinV1OrderBook.sol";
+import { DoefinV1OptionsManager } from "./DoefinV1OptionsManager.sol";
 
 /// @title DoefinV1Factory
 /// @notice See the documentation in {IDoefinFactory}.
@@ -30,20 +31,36 @@ contract DoefinV1Factory is IDoefinFactory, Ownable {
     //@@inheritdoc IDoefinFactory
     function createOrderBook(
         address strikeToken,
-        uint256 minStrikeAmount
+        uint256 minStrikeTokenAmount,
+        address optionsManager
     )
         external
         override
         onlyOwner
         returns (address orderBookAddress)
     {
-        orderBookAddress = address(new DoefinV1OrderBook(strikeToken, minStrikeAmount));
+        orderBookAddress = address(new DoefinV1OrderBook(strikeToken, minStrikeTokenAmount, optionsManager));
         orderBooks[orderBookAddress] = OrderBook(orderBookAddress);
         emit OrderBookCreated(orderBookAddress);
         return orderBookAddress;
     }
 
-    //@@inheritdoc
+    //@@inheritdoc IDoefinFactory
+    function createOptionsManager(
+        address orderBook,
+        address blockHeaderOracle
+    )
+        external
+        override
+        onlyOwner
+        returns (address optionsManagerAddress)
+    {
+        optionsManagerAddress = address(new DoefinV1OptionsManager(orderBook, blockHeaderOracle));
+        emit OrderBookCreated(optionsManagerAddress);
+        return optionsManagerAddress;
+    }
+
+    //@@inheritdoc IDoefinFactory
     function addTokenToApprovedList(address token) external override onlyOwner {
         if (token == address(0)) {
             revert Errors.ZeroAddress();
@@ -53,7 +70,7 @@ contract DoefinV1Factory is IDoefinFactory, Ownable {
         emit AddTokenToApprovedList(token);
     }
 
-    //@@inheritdoc
+    //@@inheritdoc IDoefinFactory
     function removeTokenFromApprovedList(address token) external override onlyOwner {
         if (token == address(0)) {
             revert Errors.ZeroAddress();
@@ -63,7 +80,7 @@ contract DoefinV1Factory is IDoefinFactory, Ownable {
         emit RemoveTokenFromApprovedList(token);
     }
 
-    //@@inheritdoc
+    //@@inheritdoc IDoefinFactory
     function getOrderBook(address orderBookAddress) external view returns (OrderBook memory) {
         return orderBooks[orderBookAddress];
     }

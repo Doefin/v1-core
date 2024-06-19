@@ -26,7 +26,16 @@ interface IDoefinFactory {
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @notice Creates a new orderBook
-    function createOrderBook(address strikeToken, uint256 minStrikeAmount) external returns (address);
+    function createOrderBook(
+        address strikeToken,
+        uint256 minStrikeAmount,
+        address optionsManager
+    )
+        external
+        returns (address);
+
+    /// @notice Creates a new options manager
+    function createOptionsManager(address orderBook, address blockHeaderOracle) external returns (address);
 
     /// @notice Updates the token approved list
     /// @param token Token to add to the approved list
