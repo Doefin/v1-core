@@ -9,10 +9,10 @@ import { IDoefinV1OrderBook } from "./interfaces/IDoefinV1OrderBook.sol";
 
 contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     /// @notice The ERC20 token used as strike token in the trading pair
-    IERC20 public immutable strikeToken;
+    IERC20 public immutable collateralToken;
 
-    /// @notice The minimum strike token amount required for an order to be valid
-    uint256 public immutable minStrikeTokenAmount;
+    /// @notice The minimum collateral token amount required for an order to be valid
+    uint256 public immutable minCollateralTokenAmount;
 
     /// @notice The minimum strike token amount required for an order to be valid
     address public immutable optionsManager;
@@ -28,17 +28,17 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         _;
     }
 
-    constructor(address _strikeToken, uint256 _minStrikeTokenAmount, address _optionsManager) ERC1155("") {
-        if (_minStrikeTokenAmount == 0) {
-            revert Errors.OrderBook_InvalidMinStrikeAmount();
+    constructor(address _collateralToken, uint256 _minCollateralTokenAmount, address _optionsManager) ERC1155("") {
+        if (_minCollateralTokenAmount == 0) {
+            revert Errors.OrderBook_InvalidMinCollateralAmount();
         }
 
-        if (_strikeToken == address(0) || _optionsManager == address(0)) {
+        if (_collateralToken == address(0) || _optionsManager == address(0)) {
             revert Errors.ZeroAddress();
         }
 
-        strikeToken = IERC20(_strikeToken);
-        minStrikeTokenAmount = _minStrikeTokenAmount;
+        collateralToken = IERC20(_collateralToken);
+        minCollateralTokenAmount = _minCollateralTokenAmount;
         optionsManager = _optionsManager;
     }
 
@@ -53,16 +53,12 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         public
         returns (uint256)
     {
-        if (allowed == address(0)) {
-            revert Errors.ZeroAddress();
-        }
-
         if (strike == 0) {
             revert Errors.OrderBook_ZeroStrike();
         }
 
-        if (amount < minStrikeTokenAmount) {
-            revert Errors.OrderBook_InvalidMinStrikeAmount();
+        if (amount < minCollateralTokenAmount) {
+            revert Errors.OrderBook_InvalidMinCollateralAmount();
         }
 
         if (expiry == 0) {
@@ -73,7 +69,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         BinaryOption memory newBinaryOption = BinaryOption({
             amount: amount,
             position: isLong ? Position.Long : Position.Short,
-            strikeToken: address(strikeToken),
+            collateralToken: address(collateralToken),
             expiry: expiry,
             exerciseWindowStart: block.timestamp,
             exerciseWindowEnd: 0,
@@ -85,7 +81,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
             isSettled: false
         });
 
-        IERC20(strikeToken).transferFrom(msg.sender, address(this), amount);
+        IERC20(collateralToken).transferFrom(msg.sender, address(this), amount);
         _mint(msg.sender, newOrderId, 1, "");
         orders[newOrderId] = newBinaryOption;
         orderIdCounter++;
@@ -95,8 +91,10 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     }
 
     //@@inheritdoc
-    function matchOrder(uint256 orderId, uint256 amount) public {
+    function matchOrder(uint256 orderId) public {
         BinaryOption storage order = orders[orderId];
+        uint256 amount = order.amount;
+
         if (block.timestamp > order.exerciseWindowStart) {
             revert Errors.OrderBook_MatchOrderExpired();
         }
@@ -105,7 +103,12 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
             revert Errors.OrderBook_MatchOrderNotAllowed();
         }
 
-        IERC20(strikeToken).transferFrom(msg.sender, address(this), amount);
+        uint256 balBefore = IERC20(collateralToken).balanceOf(address(this));
+        IERC20(collateralToken).transferFrom(msg.sender, address(this), amount);
+        if(IERC20(collateralToken).balanceOf(address(this)) - balBefore != amount){
+            revert Errors.OrderBook_IncorrectMatchOrderAmount();
+        }
+
         order.counterparty = msg.sender;
         order.payOffAmount += amount;
 
@@ -135,10 +138,10 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
                 || order.position == Position.Short && order.finalStrike < order.initialStrike
         ) {
             winner = order.writer;
-            IERC20(strikeToken).transfer(order.writer, order.payOffAmount);
+            IERC20(collateralToken).transfer(order.writer, order.payOffAmount);
         } else {
             winner = order.counterparty;
-            IERC20(strikeToken).transfer(order.counterparty, order.payOffAmount);
+            IERC20(collateralToken).transfer(order.counterparty, order.payOffAmount);
         }
 
         emit OrderExercised(orderId, order.payOffAmount, winner);

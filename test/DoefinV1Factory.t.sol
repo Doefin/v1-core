@@ -52,12 +52,12 @@ contract DoefinV1Factory_Test is Base_Test {
         factory.removeTokenFromApprovedList(address(dai));
     }
 
-    function test_CreateOrderBook(address strikeToken, uint256 minStrikeAmount, address optionsManager) public {
+    function test_CreateOrderBook(address collateralToken, uint256 minStrikeAmount, address optionsManager) public {
         vm.assume(minStrikeAmount != 0);
-        vm.assume(strikeToken != address(0));
+        vm.assume(collateralToken != address(0));
         vm.assume(optionsManager != address(0));
 
-        address orderBookAddress = factory.createOrderBook(strikeToken, minStrikeAmount, optionsManager);
+        address orderBookAddress = factory.createOrderBook(collateralToken, minStrikeAmount, optionsManager);
         assertEq(factory.getOrderBook(orderBookAddress).orderBookAddress, orderBookAddress);
     }
 

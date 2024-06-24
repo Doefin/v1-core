@@ -20,7 +20,7 @@ interface IDoefinV1OrderBook {
      * @param amount The amount of the underlying asset that the option covers.
      * @param position The position of the option. Can take the value Long or Short
      * @param strike The strike value of the option in terms of the strike token.
-     * @param strikeToken The address of the token that is used to pay the strike price.
+     * @param collateralToken The address of the token that is used to pay the strike price.
      * @param writer The address that created the option.
      * @param counterparty The address of the counter party.
      * @param payOffAmount The fixed amount to pay if the condition is met
@@ -36,7 +36,7 @@ interface IDoefinV1OrderBook {
         address writer;
         uint256 initialStrike;
         uint256 finalStrike;
-        address strikeToken;
+        address collateralToken;
         address counterparty;
         uint256 payOffAmount;
         uint256 expiry;
@@ -127,9 +127,8 @@ interface IDoefinV1OrderBook {
     /**
      * @dev Match a given order by a maker
      * @param orderId The order id of the order to match
-     * @param amount The amount of the asset that the match option covers.
      */
-    function matchOrder(uint256 orderId, uint256 amount) external;
+    function matchOrder(uint256 orderId) external;
 
     /**
      * @notice Exercises a specified amount of an existing option.

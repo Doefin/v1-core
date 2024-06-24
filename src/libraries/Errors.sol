@@ -33,7 +33,7 @@ library Errors {
     error OrderBook_ZeroExpiry();
 
     /// @notice Thrown when min strike amount is zero
-    error OrderBook_InvalidMinStrikeAmount();
+    error OrderBook_InvalidMinCollateralAmount();
 
     /// @notice Thrown when the period to match an order has expired
     error OrderBook_MatchOrderExpired();
@@ -49,4 +49,7 @@ library Errors {
 
     /// @notice Thrown when the order is not settled
     error OrderBook_OrderNotSettled();
+
+    /// @notice Thrown when the match order amount is incorrect
+    error OrderBook_IncorrectMatchOrderAmount();
 }

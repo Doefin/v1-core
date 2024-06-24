@@ -9,7 +9,7 @@ import { IDoefinOptionsManager, DoefinV1OptionsManager } from "../src/DoefinV1Op
 /// @title DoefinV1OrderBook_Test
 contract DoefinV1OrderBook_Test is Base_Test {
     DoefinV1OrderBook public orderBook;
-    uint256 public constant minStrikeTokenAmount = 100;
+    uint256 public constant minCollateralTokenAmount = 100;
     uint256 public constant depositBound = 5000e6;
 
     function setUp() public virtual override {
@@ -19,7 +19,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         DoefinV1OptionsManager optionsManager =
             DoefinV1OptionsManager(factory.createOptionsManager(address(0), address(0)));
         orderBook =
-            DoefinV1OrderBook(factory.createOrderBook(address(dai), minStrikeTokenAmount, address(optionsManager)));
+            DoefinV1OrderBook(factory.createOrderBook(address(dai), minCollateralTokenAmount, address(optionsManager)));
 
         vm.startBroadcast(optionsManager.owner());
         optionsManager.setOrderBookAddress(address(orderBook));
@@ -42,7 +42,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike == 0);
         vm.assume(expiry != 0);
         vm.assume(allowed != address(0));
-        vm.assume(amount >= minStrikeTokenAmount);
+        vm.assume(amount >= minCollateralTokenAmount);
 
         orderBook.createOrder(strike, amount, expiry, isLong, allowed);
     }
@@ -59,7 +59,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(allowed != address(0));
-        vm.assume(amount < minStrikeTokenAmount);
+        vm.assume(amount < minCollateralTokenAmount);
 
         orderBook.createOrder(strike, amount, expiry, isLong, allowed);
     }
@@ -76,7 +76,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(expiry == 0);
         vm.assume(allowed != address(0));
-        vm.assume(amount >= minStrikeTokenAmount);
+        vm.assume(amount >= minCollateralTokenAmount);
 
         orderBook.createOrder(strike, amount, expiry, isLong, allowed);
     }
@@ -93,7 +93,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(allowed != address(0));
-        vm.assume(amount >= minStrikeTokenAmount && amount <= depositBound);
+        vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -106,7 +106,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(allowed != address(0));
-        vm.assume(amount >= minStrikeTokenAmount && amount <= depositBound);
+        vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -134,7 +134,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.assume(strike != 0);
         vm.assume(allowed != address(0));
-        vm.assume(amount >= minStrikeTokenAmount && amount <= depositBound);
+        vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -144,7 +144,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.broker);
         vm.warp(block.timestamp + 3 days);
         dai.approve(address(orderBook), amount);
-        orderBook.matchOrder(orderId, amount);
+        orderBook.matchOrder(orderId);
         vm.stopBroadcast();
     }
 
@@ -161,7 +161,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.assume(strike != 0);
         vm.assume(allowed != address(0));
-        vm.assume(amount >= minStrikeTokenAmount && amount <= depositBound);
+        vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -170,7 +170,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.broker);
         dai.approve(address(orderBook), amount);
-        orderBook.matchOrder(orderId, amount);
+        orderBook.matchOrder(orderId);
         vm.stopBroadcast();
     }
 
@@ -187,7 +187,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.assume(strike != 0);
         vm.assume(allowed != address(0));
-        vm.assume(amount >= minStrikeTokenAmount && amount <= depositBound);
+        vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -197,7 +197,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.broker);
         dai.approve(address(orderBook), amount);
 
-        orderBook.matchOrder(orderId, amount);
+        orderBook.matchOrder(orderId);
         orderBook.safeTransferFrom(users.broker, users.alice, orderId, 1, "");
         vm.stopBroadcast();
     }
@@ -207,7 +207,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.assume(strike != 0);
         vm.assume(allowed != address(0));
-        vm.assume(amount >= minStrikeTokenAmount && amount <= depositBound);
+        vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -220,7 +220,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.expectEmit();
         emit IDoefinV1OrderBook.OrderMatched(orderId, users.broker, amount);
 
-        orderBook.matchOrder(orderId, amount);
+        orderBook.matchOrder(orderId);
         vm.stopBroadcast();
 
         DoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
@@ -231,7 +231,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
     }
 
     /*//////////////////////////////////////////////////////////////
-              Exercise ORDER
+              EXERCISE ORDER
     //////////////////////////////////////////////////////////////*/
     function testFail__exerciseOrderWhenOrderIsNotSettled(
         uint256 strike,
@@ -246,7 +246,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.assume(strike != 0);
         vm.assume(allowed != address(0));
-        vm.assume(amount >= minStrikeTokenAmount && amount <= depositBound);
+        vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -256,7 +256,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.broker);
         dai.approve(address(orderBook), amount);
 
-        orderBook.matchOrder(orderId, amount);
+        orderBook.matchOrder(orderId);
         vm.stopBroadcast();
 
         orderBook.exerciseOrder(orderId);
@@ -278,7 +278,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(allowed != address(0));
         vm.assume(blockNumber > expiry);
-        vm.assume(amount >= minStrikeTokenAmount && amount <= depositBound);
+        vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -288,7 +288,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.broker);
         dai.approve(address(orderBook), amount);
 
-        orderBook.matchOrder(orderId, amount);
+        orderBook.matchOrder(orderId);
         vm.stopBroadcast();
 
         vm.startBroadcast(orderBook.optionsManager());
@@ -315,7 +315,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(allowed != address(0));
         vm.assume(blockNumber > expiry);
-        vm.assume(amount >= minStrikeTokenAmount && amount <= depositBound);
+        vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -325,7 +325,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.broker);
         dai.approve(address(orderBook), amount);
 
-        orderBook.matchOrder(orderId, amount);
+        orderBook.matchOrder(orderId);
         vm.stopBroadcast();
 
         vm.startBroadcast(orderBook.optionsManager());

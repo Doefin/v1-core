@@ -10,7 +10,7 @@ import { IDoefinOptionsManager, DoefinV1OptionsManager } from "../src/DoefinV1Op
 contract DoefinV1OptionsManager_Test is Base_Test {
     DoefinV1OrderBook public orderBook;
     DoefinV1OptionsManager public optionsManager;
-    uint256 public constant minStrikeTokenAmount = 100;
+    uint256 public constant minCollateralTokenTokenAmount = 100;
 
     function setUp() public virtual override {
         Base_Test.setUp();
@@ -18,7 +18,7 @@ contract DoefinV1OptionsManager_Test is Base_Test {
 
         optionsManager = DoefinV1OptionsManager(factory.createOptionsManager(address(0), address(0)));
         orderBook =
-            DoefinV1OrderBook(factory.createOrderBook(address(dai), minStrikeTokenAmount, address(optionsManager)));
+            DoefinV1OrderBook(factory.createOrderBook(address(dai), minCollateralTokenTokenAmount, address(optionsManager)));
     }
 
     function test_SetOrderBookAddress_NotOwner(address notOwner) public {

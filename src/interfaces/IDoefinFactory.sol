@@ -27,7 +27,7 @@ interface IDoefinFactory {
 
     /// @notice Creates a new orderBook
     function createOrderBook(
-        address strikeToken,
+        address collateralToken,
         uint256 minStrikeAmount,
         address optionsManager
     )

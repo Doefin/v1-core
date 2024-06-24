@@ -30,8 +30,8 @@ contract DoefinV1Factory is IDoefinFactory, Ownable {
     //////////////////////////////////////////////////////////////////////////*/
     //@@inheritdoc IDoefinFactory
     function createOrderBook(
-        address strikeToken,
-        uint256 minStrikeTokenAmount,
+        address collateralToken,
+        uint256 minCollateralTokenAmount,
         address optionsManager
     )
         external
@@ -39,7 +39,7 @@ contract DoefinV1Factory is IDoefinFactory, Ownable {
         onlyOwner
         returns (address orderBookAddress)
     {
-        orderBookAddress = address(new DoefinV1OrderBook(strikeToken, minStrikeTokenAmount, optionsManager));
+        orderBookAddress = address(new DoefinV1OrderBook(collateralToken, minCollateralTokenAmount, optionsManager));
         orderBooks[orderBookAddress] = OrderBook(orderBookAddress);
         emit OrderBookCreated(orderBookAddress);
         return orderBookAddress;
