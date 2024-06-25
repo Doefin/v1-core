@@ -16,6 +16,10 @@ interface IDoefinOptionsManager {
     /// @param orderBook The order book address to set
     event SetOrderBookAddress(address indexed orderBook);
 
+    /// @notice Emitted when an order book address is set
+    /// @param optionsFeeAddress The options fee address
+    event SetOptionsFeeAddress(address indexed optionsFeeAddress);
+
     /// @notice Emitted when the block header oracle address is set
     /// @param blockHeaderOracle The block header oracle address to set
     event SetBlockHeaderOracleAddress(address indexed blockHeaderOracle);
@@ -34,6 +38,14 @@ interface IDoefinOptionsManager {
     /// @notice Set a new block header oracle address
     /// @param newBlockHeaderOracle address of the block header oracle
     function setBlockHeaderOracleAddress(address newBlockHeaderOracle) external;
+
+    /// @notice Set a new options fee address
+    /// @param newOptionsFeeAddress address of the options fee collector
+    function setOptionsFeeAddress(address newOptionsFeeAddress) external;
+
+    /// @notice Set the options fee address
+    /// @return the address of the options fee collector
+    function getOptionsFeeAddress() external returns (address);
 
     /*//////////////////////////////////////////////////////////////////////////
                                  CONSTANT FUNCTIONS

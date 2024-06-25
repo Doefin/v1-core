@@ -16,9 +16,10 @@ contract DoefinV1OptionsManager_Test is Base_Test {
         Base_Test.setUp();
         Base_Test.deployFactory();
 
-        optionsManager = DoefinV1OptionsManager(factory.createOptionsManager(address(0), address(0)));
-        orderBook =
-            DoefinV1OrderBook(factory.createOrderBook(address(dai), minCollateralTokenTokenAmount, address(optionsManager)));
+        optionsManager = DoefinV1OptionsManager(factory.createOptionsManager(address(0), address(0), users.feeAddress));
+        orderBook = DoefinV1OrderBook(
+            factory.createOrderBook(address(dai), minCollateralTokenTokenAmount, address(optionsManager))
+        );
     }
 
     function test_SetOrderBookAddress_NotOwner(address notOwner) public {
@@ -117,4 +118,17 @@ contract DoefinV1OptionsManager_Test is Base_Test {
         vm.prank(blockHeaderOracle);
         optionsManager.settleOrders(blockNumber, difficulty);
     }
+
+    //    function test_SetOptionsFeeAddress_NotOwner(address notOwner) public {
+    //        vm.assume(notOwner != optionsManager.owner());
+    //        vm.expectRevert("Ownable: caller is not the owner");
+    //
+    //        vm.prank(notOwner);
+    //        optionsManager.setOrderBookAddress(address(1));
+    //    }
+
+    //    function testFail_SetOptionsFeeAddress_ZeroAddress() public {
+    //        vm.prank(optionsManager.owner());
+    //        optionsManager.setOrderBookAddress(address(0));
+    //    }
 }

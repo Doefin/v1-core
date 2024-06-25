@@ -18,6 +18,7 @@ interface IDoefinV1OrderBook {
     /**
      * @dev Struct to store essential details about a vanilla option.
      * @param amount The amount of the underlying asset that the option covers.
+     * @param premium The premium the protocol takes from the trade
      * @param position The position of the option. Can take the value Long or Short
      * @param strike The strike value of the option in terms of the strike token.
      * @param collateralToken The address of the token that is used to pay the strike price.
@@ -32,6 +33,7 @@ interface IDoefinV1OrderBook {
      */
     struct BinaryOption {
         uint256 amount;
+        uint256 premium;
         Position position;
         address writer;
         uint256 initialStrike;

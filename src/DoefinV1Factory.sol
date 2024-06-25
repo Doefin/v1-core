@@ -48,14 +48,15 @@ contract DoefinV1Factory is IDoefinFactory, Ownable {
     //@@inheritdoc IDoefinFactory
     function createOptionsManager(
         address orderBook,
-        address blockHeaderOracle
+        address blockHeaderOracle,
+        address optionsFeeAddress
     )
         external
         override
         onlyOwner
         returns (address optionsManagerAddress)
     {
-        optionsManagerAddress = address(new DoefinV1OptionsManager(orderBook, blockHeaderOracle));
+        optionsManagerAddress = address(new DoefinV1OptionsManager(orderBook, blockHeaderOracle, optionsFeeAddress));
         emit OrderBookCreated(optionsManagerAddress);
         return optionsManagerAddress;
     }

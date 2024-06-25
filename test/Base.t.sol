@@ -39,7 +39,12 @@ abstract contract Base_Test is Test, Assertions, Constants {
         vm.label({ account: address(usdt), newLabel: "USDT" });
 
         // Create users for testing.
-        users = Users({ admin: createUser("Admin"), alice: createUser("Alice"), broker: createUser("Broker") });
+        users = Users({
+            admin: createUser("Admin"),
+            alice: createUser("Alice"),
+            broker: createUser("Broker"),
+            feeAddress: createUser("FeeAddress")
+        });
     }
 
     /*//////////////////////////////////////////////////////////////////////////

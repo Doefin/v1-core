@@ -17,6 +17,9 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     /// @notice The minimum strike token amount required for an order to be valid
     address public immutable optionsManager;
 
+    /// @notice The address where premium fees are transferred to
+    address public immutable optionsFeeAddress;
+
     /// @dev The id of the next order to be created
     uint256 public orderIdCounter;
 
@@ -40,6 +43,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         collateralToken = IERC20(_collateralToken);
         minCollateralTokenAmount = _minCollateralTokenAmount;
         optionsManager = _optionsManager;
+        optionsFeeAddress = IDoefinOptionsManager(optionsManager).getOptionsFeeAddress();
     }
 
     //@@inheritdoc
@@ -68,6 +72,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         uint256 newOrderId = orderIdCounter;
         BinaryOption memory newBinaryOption = BinaryOption({
             amount: amount,
+            premium: 0,
             position: isLong ? Position.Long : Position.Short,
             collateralToken: address(collateralToken),
             expiry: expiry,
@@ -94,6 +99,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     function matchOrder(uint256 orderId) public {
         BinaryOption storage order = orders[orderId];
         uint256 amount = order.amount;
+        uint256 premium = (amount * 2) / 100; //1% of bet amount
 
         if (block.timestamp > order.exerciseWindowStart) {
             revert Errors.OrderBook_MatchOrderExpired();
@@ -105,12 +111,15 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
 
         uint256 balBefore = IERC20(collateralToken).balanceOf(address(this));
         IERC20(collateralToken).transferFrom(msg.sender, address(this), amount);
-        if(IERC20(collateralToken).balanceOf(address(this)) - balBefore != amount){
+        if (IERC20(collateralToken).balanceOf(address(this)) - balBefore != amount) {
             revert Errors.OrderBook_IncorrectMatchOrderAmount();
         }
 
+        order.amount += amount;
         order.counterparty = msg.sender;
-        order.payOffAmount += amount;
+        order.premium = premium;
+        order.payOffAmount += amount - premium;
+        IERC20(collateralToken).transfer(optionsFeeAddress, premium);
 
         _mint(msg.sender, orderId, 1, "");
         _registerOrderForSettlement(orderId);

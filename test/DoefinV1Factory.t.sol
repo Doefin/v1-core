@@ -4,6 +4,7 @@ pragma solidity >=0.8.19;
 import { Base_Test } from "./Base.t.sol";
 import { Test } from "forge-std/Test.sol";
 import { IDoefinFactory } from "../src/interfaces/IDoefinFactory.sol";
+import { DoefinV1OptionsManager } from "../src/DoefinV1OptionsManager.sol";
 
 /// @title DoefinV1Factory_Test
 contract DoefinV1Factory_Test is Base_Test {
@@ -23,7 +24,7 @@ contract DoefinV1Factory_Test is Base_Test {
         vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(users.alice);
-        factory.createOptionsManager(address(1), address(1));
+        factory.createOptionsManager(address(1), address(1), address(1));
     }
 
     function test_AddTokenToApproveList_NotOwner() public {
@@ -52,17 +53,25 @@ contract DoefinV1Factory_Test is Base_Test {
         factory.removeTokenFromApprovedList(address(dai));
     }
 
-    function test_CreateOrderBook(address collateralToken, uint256 minStrikeAmount, address optionsManager) public {
+    function test_CreateOrderBook(address collateralToken, uint256 minStrikeAmount) public {
         vm.assume(minStrikeAmount != 0);
         vm.assume(collateralToken != address(0));
-        vm.assume(optionsManager != address(0));
 
-        address orderBookAddress = factory.createOrderBook(collateralToken, minStrikeAmount, optionsManager);
+        DoefinV1OptionsManager optionsManager =
+            DoefinV1OptionsManager(factory.createOptionsManager(address(0), address(0), users.feeAddress));
+
+        address orderBookAddress = factory.createOrderBook(collateralToken, minStrikeAmount, address(optionsManager));
         assertEq(factory.getOrderBook(orderBookAddress).orderBookAddress, orderBookAddress);
     }
 
-    function test_CreateOptionsManager(address orderBook, address blockHeaderOracle) public {
-        address optionsManagerAddress = factory.createOptionsManager(orderBook, blockHeaderOracle);
+    function test_CreateOptionsManager(
+        address orderBook,
+        address blockHeaderOracle,
+        address optionsFeeAddress
+    )
+        public
+    {
+        address optionsManagerAddress = factory.createOptionsManager(orderBook, blockHeaderOracle, optionsFeeAddress);
         assertNotEq(optionsManagerAddress, address(0));
     }
 }

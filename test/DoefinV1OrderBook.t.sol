@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19;
 
-import { Base_Test } from "./Base.t.sol";
+import { IERC20, Base_Test } from "./Base.t.sol";
 import { Test } from "forge-std/Test.sol";
 import { Errors, DoefinV1OrderBook, IDoefinV1OrderBook } from "../src/DoefinV1OrderBook.sol";
 import { IDoefinOptionsManager, DoefinV1OptionsManager } from "../src/DoefinV1OptionsManager.sol";
@@ -17,7 +17,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         Base_Test.deployFactory();
 
         DoefinV1OptionsManager optionsManager =
-            DoefinV1OptionsManager(factory.createOptionsManager(address(0), address(0)));
+            DoefinV1OptionsManager(factory.createOptionsManager(address(0), address(0), users.feeAddress));
         orderBook =
             DoefinV1OrderBook(factory.createOrderBook(address(dai), minCollateralTokenAmount, address(optionsManager)));
 
@@ -220,14 +220,18 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.expectEmit();
         emit IDoefinV1OrderBook.OrderMatched(orderId, users.broker, amount);
 
+        uint256 feeBalBefore = IERC20(orderBook.collateralToken()).balanceOf(users.feeAddress);
         orderBook.matchOrder(orderId);
         vm.stopBroadcast();
+        uint256 orderBookBalAfter = IERC20(orderBook.collateralToken()).balanceOf(address(orderBook));
 
         DoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
         assertEq(order.counterparty, users.broker);
-        assertEq(order.payOffAmount, amount * 2);
+        assertEq(order.payOffAmount, amount * 2 - order.premium);
 
         assertEq(orderBook.balanceOf(users.broker, orderId), 1);
+        assertEq(IERC20(order.collateralToken).balanceOf(users.feeAddress) - feeBalBefore, order.premium);
+        assertEq(order.amount - orderBookBalAfter, order.premium);
     }
 
     /*//////////////////////////////////////////////////////////////

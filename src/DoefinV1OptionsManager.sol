@@ -17,6 +17,9 @@ contract DoefinV1OptionsManager is IDoefinOptionsManager, Ownable {
     /// @notice The order book address used for settling orders
     address public orderBook;
 
+    /// @notice The options fee address for collecting option premiums
+    address public optionsFeeAddress;
+
     /// @notice The block header oracle address used for settling orders
     address public blockHeaderOracle;
 
@@ -38,9 +41,10 @@ contract DoefinV1OptionsManager is IDoefinOptionsManager, Ownable {
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @dev Initializes the options manager
-    constructor(address _orderBook, address _blockHeaderOracle) Ownable() {
+    constructor(address _orderBook, address _blockHeaderOracle, address _optionsFeeAddress) Ownable() {
         orderBook = _orderBook;
         blockHeaderOracle = _blockHeaderOracle;
+        optionsFeeAddress = _optionsFeeAddress;
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -81,5 +85,24 @@ contract DoefinV1OptionsManager is IDoefinOptionsManager, Ownable {
 
         blockHeaderOracle = newBlockHeaderOracle;
         emit SetBlockHeaderOracleAddress(newBlockHeaderOracle);
+    }
+
+    //@@inheritdoc
+    function setOptionsFeeAddress(address newOptionsFeeAddress) public onlyOwner {
+        if (newOptionsFeeAddress == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+
+        optionsFeeAddress = newOptionsFeeAddress;
+        emit SetOptionsFeeAddress(newOptionsFeeAddress);
+    }
+
+    //@@inheritdoc
+    function getOptionsFeeAddress() public returns (address) {
+        if (optionsFeeAddress == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+
+        return optionsFeeAddress;
     }
 }
