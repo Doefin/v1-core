@@ -231,7 +231,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         assertEq(orderBook.balanceOf(users.broker, orderId), 1);
         assertEq(IERC20(order.collateralToken).balanceOf(users.feeAddress) - feeBalBefore, order.premium);
-        assertEq(order.amount - orderBookBalAfter, order.premium);
+        assertEq((order.amount * 2) - orderBookBalAfter, order.premium);
     }
 
     /*//////////////////////////////////////////////////////////////

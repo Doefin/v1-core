@@ -112,10 +112,9 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         uint256 balBefore = IERC20(collateralToken).balanceOf(address(this));
         IERC20(collateralToken).transferFrom(msg.sender, address(this), amount);
         if (IERC20(collateralToken).balanceOf(address(this)) - balBefore != amount) {
-            revert Errors.OrderBook_IncorrectMatchOrderAmount();
+            revert Errors.OrderBook_UnableToMatchOrder();
         }
 
-        order.amount += amount;
         order.counterparty = msg.sender;
         order.premium = premium;
         order.payOffAmount += amount - premium;

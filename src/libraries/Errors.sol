@@ -51,5 +51,5 @@ library Errors {
     error OrderBook_OrderNotSettled();
 
     /// @notice Thrown when the match order amount is incorrect
-    error OrderBook_IncorrectMatchOrderAmount();
+    error OrderBook_UnableToMatchOrder();
 }
