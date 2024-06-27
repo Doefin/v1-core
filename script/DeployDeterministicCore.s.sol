@@ -9,12 +9,7 @@ import { DoefinV1Factory } from "../src/DoefinV1Factory.sol";
 ///
 /// @dev Reverts if any contract has already been deployed.
 contract DeployDeterministicCore is BaseScript {
-    function run(address initialAdmin)
-        public
-        virtual
-        broadcast
-        returns (DoefinV1Factory factory)
-    {
+    function run(address initialAdmin) public virtual broadcast returns (DoefinV1Factory factory) {
         bytes32 salt = constructCreate2Salt();
         factory = new DoefinV1Factory{ salt: salt }();
     }

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19 <0.9.0;
+
 import { Users } from "./utils/Types.sol";
 import { Constants } from "./utils/Constants.sol";
 import { Assertions } from "./utils/Assertions.sol";
@@ -7,7 +8,6 @@ import { DoefinV1Factory, IDoefinFactory } from "../src/DoefinV1Factory.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { Test } from "forge-std/Test.sol";
-
 
 /// @notice Base test contract with common logic needed by all tests.
 abstract contract Base_Test is Test, Assertions, Constants {
@@ -42,14 +42,15 @@ abstract contract Base_Test is Test, Assertions, Constants {
         users = Users({
             admin: createUser("Admin"),
             alice: createUser("Alice"),
-            broker: createUser("Broker")
+            broker: createUser("Broker"),
+            feeAddress: createUser("FeeAddress")
         });
     }
 
     /*//////////////////////////////////////////////////////////////////////////
                                       HELPERS
     //////////////////////////////////////////////////////////////////////////*/
-    
+
     /// @dev Generates a user, labels its address, and funds it with test assets.
     function createUser(string memory name) internal returns (address payable) {
         address payable user = payable(makeAddr(name));

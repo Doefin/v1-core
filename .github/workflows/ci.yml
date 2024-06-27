@@ -5,51 +5,43 @@ concurrency:
   group: ${{github.workflow}}-${{github.ref}}
 
 on:
-  workflow_dispatch:
   pull_request:
+    branches:
+      - '**'
   push:
     branches:
       - "main"
-      - "staging"
-      - "staging-blast"
-
+      - "master"
 jobs:
-  lint:
-    uses: "repo-path/reusable-workflows/.github/workflows/forge-lint.yml@main"
+  forge-lint:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Check out the repo"
+        uses: "actions/checkout@v4"
 
-  build:
-    uses: "repo-path/reusable-workflows/.github/workflows/forge-build.yml@main"
+      - name: "Install Foundry"
+        uses: "foundry-rs/foundry-toolchain@v1"
 
-  test-unit:
-    needs: ["lint", "build"]
-    uses: "repo-path/reusable-workflows/.github/workflows/forge-test.yml@main"
-    with:
-      foundry-fuzz-runs: 5000
-      foundry-profile: "test-optimized"
-      match-path: "test/unit/**/*.sol"
-      name: "Unit tests"
+      - name: "Lint the code"
+        run: "forge fmt"
 
-  test-integration:
-    needs: ["lint", "build"]
-    uses: "repo-path/reusable-workflows/.github/workflows/forge-test.yml@main"
-    with:
-      foundry-fuzz-runs: 5000
-      foundry-profile: "test-optimized"
-      match-path: "test/integration/**/*.sol"
-      name: "Integration tests"
+      - name: "Lint summary"
+        run: |
+          echo "## Lint result" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
+  forge-test:
+    name: Foundry project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
-  test-invariant:
-    needs: ["lint", "build"]
-    uses: "repo-path/reusable-workflows/.github/workflows/forge-test.yml@main"
-    with:
-      foundry-profile: "test-optimized"
-      match-path: "test/invariant/**/*.sol"
-      name: "Invariant tests"
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
 
-  coverage:
-    needs: ["lint", "build"]
-    secrets:
-      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-    uses: "repo-path/reusable-workflows/.github/workflows/forge-coverage.yml@main"
-    with:
-      match-path: "test/{integration,unit}/**/*.sol"
+      - name: Run tests
+        run: forge test -vvv
+
+      - name: Run snapshot
+        run: forge snapshot

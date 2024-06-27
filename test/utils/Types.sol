@@ -4,8 +4,10 @@ pragma solidity >=0.8.19;
 struct Users {
     // Default admin for all contracts.
     address payable admin;
-    // Impartial user.
+    // User Alice.
     address payable alice;
-    // Default stream broker.
+    // User broker.
     address payable broker;
+    // User Fee Address
+    address payable feeAddress;
 }
