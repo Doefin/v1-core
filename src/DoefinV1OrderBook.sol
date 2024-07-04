@@ -105,7 +105,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
             revert Errors.OrderBook_MatchOrderExpired();
         }
 
-        if (order.counterparty != msg.sender) {
+        if (order.counterparty != address(0) && msg.sender != order.counterparty) {
             revert Errors.OrderBook_MatchOrderNotAllowed();
         }
 

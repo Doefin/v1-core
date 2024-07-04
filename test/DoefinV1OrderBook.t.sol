@@ -202,11 +202,55 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
-    function test__matchOrder(uint256 strike, uint256 amount, uint256 expiry, bool isLong, address allowed) public {
+    function test__matchOrderWithZeroAddressCounterParty(
+        uint256 strike,
+        uint256 amount,
+        uint256 expiry,
+        bool isLong
+    )
+        public
+    {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(allowed != address(0));
+        vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
+
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), amount);
+        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, address(0));
+        vm.stopBroadcast();
+
+        vm.startBroadcast(users.broker);
+        dai.approve(address(orderBook), amount);
+
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderMatched(orderId, users.broker, amount);
+
+        uint256 feeBalBefore = IERC20(orderBook.collateralToken()).balanceOf(users.feeAddress);
+        orderBook.matchOrder(orderId);
+        vm.stopBroadcast();
+        uint256 orderBookBalAfter = IERC20(orderBook.collateralToken()).balanceOf(address(orderBook));
+
+        DoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
+        assertEq(order.counterparty, users.broker);
+        assertEq(order.payOffAmount, amount * 2 - order.premium);
+
+        assertEq(orderBook.balanceOf(users.broker, orderId), 1);
+        assertEq(IERC20(order.collateralToken).balanceOf(users.feeAddress) - feeBalBefore, order.premium);
+        assertEq((order.amount * 2) - orderBookBalAfter, order.premium);
+    }
+
+    function test__matchOrderWithNonZeroAddressCounterParty(
+        uint256 strike,
+        uint256 amount,
+        uint256 expiry,
+        bool isLong
+    )
+        public
+    {
+        uint256 expiry = block.timestamp + 2 days;
+
+        vm.assume(strike != 0);
         vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
         vm.startBroadcast(users.alice);
