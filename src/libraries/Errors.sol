@@ -17,11 +17,11 @@ library Errors {
     error ZeroAddress();
 
     /*//////////////////////////////////////////////////////////////////////////
-                                          FACTORY
+                                    FACTORY
     //////////////////////////////////////////////////////////////////////////*/
 
     /*//////////////////////////////////////////////////////////////////////////
-                                          ORDER_BOOK
+                                    ORDER_BOOK
     //////////////////////////////////////////////////////////////////////////*/
     /// @notice Thrown when strike is zero
     error OrderBook_ZeroStrike();
@@ -52,4 +52,16 @@ library Errors {
 
     /// @notice Thrown when the match order amount is incorrect
     error OrderBook_UnableToMatchOrder();
+
+    /*//////////////////////////////////////////////////////////////////////////
+                              BLOCK HEADER ORACLE
+    //////////////////////////////////////////////////////////////////////////*/
+    /// @notice Thrown when strike is zero
+    error BlockHeaderOracle_InsufficientTimeStamps();
+
+    /// @notice Thrown when strike is zero
+    error BlockHeaderOracle_PrevBlockHashMismatch();
+
+    /// @notice Thrown when strike is zero
+    error BlockHeaderOracle_InvalidTimestamp();
 }

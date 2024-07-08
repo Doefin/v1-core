@@ -31,9 +31,26 @@ interface IDoefinBlockHeaderOracle {
         uint32 nonce;
     }
 
-    // Errors
-
     // Events
+    event BlockSubmitted(bytes32 indexed merkleRootHash);
 
     // Interface methods
+    /**
+     * @notice Allows anyone to submit a confirmed block header
+     * @dev Add block header to ring buffer, and the block timestamp to the sorted list
+     * @param newBlockHeader The newest block header to the added to the head of the ring buffer
+     */
+    function submitNextBlock(BlockHeader calldata newBlockHeader) external;
+
+    /**
+     * @notice Get the median timestamp from the sorted timestamp list
+     * @return the median block timestamp
+     */
+    function medianBlockTime() external view returns(uint256);
+
+    /**
+     * @notice Get the latest block header
+     * @return the latest block header
+     */
+    function getLatestBlockHeader() external view returns (BlockHeader memory);
 }
