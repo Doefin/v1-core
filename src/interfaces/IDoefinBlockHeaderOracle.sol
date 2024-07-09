@@ -46,7 +46,7 @@ interface IDoefinBlockHeaderOracle {
      * @notice Get the median timestamp from the sorted timestamp list
      * @return the median block timestamp
      */
-    function medianBlockTime() external view returns(uint256);
+    function medianBlockTime() external view returns (uint256);
 
     /**
      * @notice Get the latest block header

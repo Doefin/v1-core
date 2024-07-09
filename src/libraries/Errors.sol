@@ -56,12 +56,15 @@ library Errors {
     /*//////////////////////////////////////////////////////////////////////////
                               BLOCK HEADER ORACLE
     //////////////////////////////////////////////////////////////////////////*/
-    /// @notice Thrown when strike is zero
+    /// @notice Thrown when timestamps are insufficient
     error BlockHeaderOracle_InsufficientTimeStamps();
 
-    /// @notice Thrown when strike is zero
+    /// @notice Thrown when the there is a block hash mismatch
     error BlockHeaderOracle_PrevBlockHashMismatch();
 
-    /// @notice Thrown when strike is zero
+    /// @notice Thrown when the timestamp is invalid
     error BlockHeaderOracle_InvalidTimestamp();
+
+    /// @notice Thrown when the data length is not correct
+    error BlockHeaderOracle_IncorrectDataLength();
 }

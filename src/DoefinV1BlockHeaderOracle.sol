@@ -61,7 +61,7 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
     /// @inheritdoc IDoefinBlockHeaderOracle
     function submitNextBlock(BlockHeader calldata newBlockHeader) public {
         BlockHeader memory currentBlockHeader = getLatestBlockHeader();
-        if (newBlockHeader.prevBlockHash != BlockHeaderUtils.getCurrentBlockHeaderHash(currentBlockHeader)) {
+        if (newBlockHeader.prevBlockHash != BlockHeaderUtils.calculateBlockHash(currentBlockHeader)) {
             revert Errors.BlockHeaderOracle_PrevBlockHashMismatch();
         }
 
