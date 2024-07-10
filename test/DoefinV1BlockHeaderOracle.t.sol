@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19;
-
+import "forge-std/Console.sol";
 import { Base_Test } from "./Base.t.sol";
 import { Test } from "forge-std/Test.sol";
-import { DoefinV1BlockHeaderOracle, IDoefinBlockHeaderOracle } from "../src/DoefinV1BlockHeaderOracle.sol";
+import { DoefinV1BlockHeaderOracle, IDoefinBlockHeaderOracle, Errors } from "../src/DoefinV1BlockHeaderOracle.sol";
 
 /// @title DoefinV1BlockHeaderOracle_Test
 contract DoefinV1BlockHeaderOracle_Test is Base_Test {
@@ -13,50 +13,64 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
         Base_Test.setUp();
         Base_Test.deployFactory();
 
-//        blockHeaderOracle = new DoefinV1BlockHeaderOracle();
+        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks());
     }
 
-    function testAddTimestamp() public {
-//        IDoefinBlockHeaderOracle.BlockHeader memory blockHeader = IDoefinBlockHeaderOracle.BlockHeader({
-//            version: 0x23f4c000,
-//            prevBlockHash: 0x00000000000000000001d76d8631742115b772ee6ab93cdf36bd5d78e2f7f250,
-//            merkleRootHash: 0x7d87da258879151913787a2e8c1717e5c676b0fe5a9db0c164c3ad91eec25a15,
-//            timestamp: 1_712_928_324,
-//            nBits: 0x17034219,
-//            nonce: 2_001_261_904
-//        });
-//        blockHeaderOracle.submitNextBlock(blockHeader);
-        assert(true);
-        // Add some timestamps
-        //        blockHeaderOracle.addTimestamp(10);
-        //        blockHeaderOracle.addTimestamp(20);
-        //        blockHeaderOracle.addTimestamp(30);
-        //        blockHeaderOracle.addTimestamp(40);
-        //        blockHeaderOracle.addTimestamp(50);
-        //        blockHeaderOracle.addTimestamp(60);
-        //        blockHeaderOracle.addTimestamp(70);
-        //        blockHeaderOracle.addTimestamp(80);
-        //        blockHeaderOracle.addTimestamp(90);
-        //        blockHeaderOracle.addTimestamp(100);
-        //        blockHeaderOracle.addTimestamp(110);
-        //
-        //        // Test median calculation
-        //        uint256 median = blockHeaderOracle.blockHeaderOracle();
-        //        assertEq(median, 60, "Median should be 60");
-        //
-        //        // Add one more timestamp and check if the oldest is removed
-        //        blockHeaderOracle.addTimestamp(120);
-        //        median = blockHeaderOracle.blockHeaderOracle();
-        //        assertEq(median, 70, "Median should be 70 after adding 120");
+    function test_FailWithInvalidPrevBlockHash() public {
+        IDoefinBlockHeaderOracle.BlockHeader memory invalidBlockHeader = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x2de60000,
+            prevBlockHash: 0x00000000000000000001a66adbcce19ffa90fb72f37115e43b407ea49b4a2dbf,
+            merkleRootHash: 0xbb94b9f29d86433922fce640b9e95605dd29661978a9040e739ff47553595d3b,
+            timestamp: 1712940028,
+            nBits: 0x17034219,
+            nonce: 1539690831
+        });
+
+        vm.expectRevert(abi.encodeWithSelector(Errors.BlockHeaderOracle_PrevBlockHashMismatch.selector));
+        blockHeaderOracle.submitNextBlock(invalidBlockHeader);
     }
 
-    function testMedianBeforeBufferFull() public {
-        // Add fewer than 11 timestamps
-        //        blockHeaderOracle.addTimestamp(10);
-        //        blockHeaderOracle.addTimestamp(20);
-        //
-        //        // Test median calculation should fail
-        //        (bool success,) = address(blockHeaderOracle).call(abi.encodeWithSignature("blockHeaderOracle()"));
-        //        assertTrue(!success, "Median calculation should fail before buffer is full");
+    function test_FailWithInvalidTimestamp() public {
+        IDoefinBlockHeaderOracle.BlockHeader memory blockHeader = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x21e02000,
+            prevBlockHash: 0x000000000000000000002e334d605c87463e3e063b733f1ab39b3ce33146e87c,
+            merkleRootHash: 0x0c0d616463b1b888ff49c72b65d46a6ba6ee0c9d2c7b0b8d75d64a9364f7c85f,
+            timestamp: 1712940014,
+            nBits: 0x17034219,
+            nonce: 305767976
+        });
+        uint256 medianTimestamp = blockHeaderOracle.medianBlockTime();
+        blockHeader.timestamp = uint32(medianTimestamp / 2);
+        vm.expectRevert(abi.encodeWithSelector(Errors.BlockHeaderOracle_InvalidTimestamp.selector));
+        blockHeaderOracle.submitNextBlock(blockHeader);
     }
+
+    function test_FailWithInvalidBlockHeaderHash() public {
+        IDoefinBlockHeaderOracle.BlockHeader memory blockHeader = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x21e02000,
+            prevBlockHash: 0x000000000000000000002e334d605c87463e3e063b733f1ab39b3ce33146e87c,
+            merkleRootHash: 0x0c0d616463b1b888ff49c72b65d46a6ba6ee0c9d2c7b0b8d75d64a9364f7c85f,
+            timestamp: 1712940014,
+            nBits: 0x17034219,
+            nonce: 305767977
+        });
+        uint256 medianTimestamp = blockHeaderOracle.medianBlockTime();
+        vm.expectRevert(abi.encodeWithSelector(Errors.BlockHeaderOracle_InvalidBlockHash.selector));
+        blockHeaderOracle.submitNextBlock(blockHeader);
+    }
+
+    function test__submitNextBlock() public {
+        console.log("submitting next bloc");
+        IDoefinBlockHeaderOracle.BlockHeader memory blockHeader = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x21e02000,
+            prevBlockHash: 0x000000000000000000002e334d605c87463e3e063b733f1ab39b3ce33146e87c,
+            merkleRootHash: 0x0c0d616463b1b888ff49c72b65d46a6ba6ee0c9d2c7b0b8d75d64a9364f7c85f,
+            timestamp: 1712940014,
+            nBits: 0x17034219,
+            nonce: 305767976
+        });
+
+        blockHeaderOracle.submitNextBlock(blockHeader);
+    }
+
 }

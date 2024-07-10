@@ -67,4 +67,10 @@ library Errors {
 
     /// @notice Thrown when the data length is not correct
     error BlockHeaderOracle_IncorrectDataLength();
+
+    /// @notice Thrown when there are no block added
+    error BlockHeaderOracle_NoBlocksAdded();
+
+    /// @notice Thrown when the block hash is invalid
+    error BlockHeaderOracle_InvalidBlockHash();
 }

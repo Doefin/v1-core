@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19;
+import "forge-std/Console.sol";
 
 import { Errors } from "./libraries/Errors.sol";
 import { BlockHeaderUtils } from "./libraries/BlockHeaderUtils.sol";
@@ -49,13 +50,11 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
     /// @notice A sorted list of timestamps
     uint256[TIMESTAMP_SIZE] public sortedTimestamps;
 
-    constructor(BlockHeader[BLOCK_HEADER_SIZE] memory initialBlockHeaders, uint256 initialBlockHeight) {
+    constructor(BlockHeader[BLOCK_HEADER_SIZE] memory initialBlockHeaders) {
         for (uint256 i = 0; i < BLOCK_HEADER_SIZE; ++i) {
             blockHeaders[i] = initialBlockHeaders[i];
+            addTimestamp(initialBlockHeaders[i].timestamp);
         }
-
-        nextBlockIndex = 0;
-        timestampCount = 0;
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
@@ -70,7 +69,7 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
         }
 
         if (!BlockHeaderUtils.isValidBlockHeaderHash(currentBlockHeader, newBlockHeader)) {
-            revert();
+            revert Errors.BlockHeaderOracle_InvalidBlockHash();
         }
 
         blockHeaders[nextBlockIndex] = newBlockHeader;
@@ -92,7 +91,9 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
 
     /// @inheritdoc IDoefinBlockHeaderOracle
     function getLatestBlockHeader() public view returns (BlockHeader memory) {
-        require(nextBlockIndex != 0 || timestampCount != 0, "No blocks added yet");
+        if(blockHeaders.length == 0) {
+            revert Errors.BlockHeaderOracle_NoBlocksAdded();
+        }
         uint256 latestIndex = (nextBlockIndex == 0) ? BLOCK_HEADER_SIZE - 1 : nextBlockIndex - 1;
         return blockHeaders[latestIndex];
     }
