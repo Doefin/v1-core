@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19;
-import "forge-std/Console.sol";
 import { Base_Test } from "./Base.t.sol";
 import { Test } from "forge-std/Test.sol";
 import { DoefinV1BlockHeaderOracle, IDoefinBlockHeaderOracle, Errors } from "../src/DoefinV1BlockHeaderOracle.sol";
@@ -60,7 +59,6 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
     }
 
     function test__submitNextBlock() public {
-        console.log("submitting next bloc");
         IDoefinBlockHeaderOracle.BlockHeader memory blockHeader = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x21e02000,
             prevBlockHash: 0x000000000000000000002e334d605c87463e3e063b733f1ab39b3ce33146e87c,

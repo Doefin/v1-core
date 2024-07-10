@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19;
-import "forge-std/Console.sol";
 
 import { Errors } from "./libraries/Errors.sol";
 import { BlockHeaderUtils } from "./libraries/BlockHeaderUtils.sol";
