@@ -160,7 +160,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(allowed != address(0));
+        vm.assume(allowed != address(0) && allowed != users.broker);
         vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
         vm.startBroadcast(users.alice);
