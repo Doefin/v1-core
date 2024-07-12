@@ -63,9 +63,7 @@ library BlockHeaderUtils {
             reverseBytes(abi.encodePacked(blockHeader.nonce))
         );
 
-        if (data.length != 80) {
-            revert Errors.BlockHeaderOracle_IncorrectDataLength();
-        }
+        require(data.length == 80, "incorrect data length");
 
         //3. Calculate the SHA-256 hash of the serialized data
         //4. Convert bytes32 of the first hash to bytes array for second SHA-256 hash
