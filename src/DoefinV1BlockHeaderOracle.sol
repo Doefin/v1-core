@@ -12,7 +12,10 @@ import { DoefinV1OptionsManager } from "./DoefinV1OptionsManager.sol";
 /**
  * @title DoefinV1BlockHeaderOracle
  * @dev The block header oracle is responsible for verifying new bitcoin block header
- * The contract is initialized with 17 confirmed blocks on the bitcoin blockchain.
+ * The contract is initialized with a buffer of 17 confirmed blocks on the bitcoin blockchain. Having a buffer of 17
+ * blocks ensures that the contract has sufficient historical data to handle reorgs and validate a new chain
+ * correctly.
+ *
  * As new blocks are mined and confirmed, they are submitted to this contract for validation.
  *
  * Validating a block header is a critical part of maintaining the integrity and security of the bitcoin
@@ -34,23 +37,20 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
     /// @notice Track the index of the next block in the ring buffer
     uint256 public nextBlockIndex;
 
-    /// @notice Track the total number of timestamps
-    uint256 public timestampCount;
-
     /// @notice The total number of timestamps to be stored
-    uint256 public constant TIMESTAMP_SIZE = 11;
+    uint256 public constant NUM_OF_TIMESTAMPS = 11;
 
-    /// @notice The total number of initial blocks to be stored
-    uint256 public constant BLOCK_HEADER_SIZE = 17;
+    /// @notice The total number of initial blocks headers to be stored
+    uint256 public constant NUM_OF_BLOCK_HEADERS = 17;
 
     /// @notice Ring buffer to store the block headers
-    BlockHeader[BLOCK_HEADER_SIZE] public blockHeaders;
+    BlockHeader[NUM_OF_BLOCK_HEADERS] public blockHeaders;
 
     /// @notice A sorted list of timestamps
-    uint256[TIMESTAMP_SIZE] public sortedTimestamps;
+    uint256[NUM_OF_TIMESTAMPS] public sortedTimestamps;
 
-    constructor(BlockHeader[BLOCK_HEADER_SIZE] memory initialBlockHeaders) {
-        for (uint256 i = 0; i < BLOCK_HEADER_SIZE; ++i) {
+    constructor(BlockHeader[NUM_OF_BLOCK_HEADERS] memory initialBlockHeaders) {
+        for (uint256 i = 0; i < NUM_OF_BLOCK_HEADERS; ++i) {
             blockHeaders[i] = initialBlockHeaders[i];
             addTimestamp(initialBlockHeaders[i].timestamp);
         }
@@ -72,7 +72,7 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
         }
 
         blockHeaders[nextBlockIndex] = newBlockHeader;
-        nextBlockIndex = (nextBlockIndex + 1) % BLOCK_HEADER_SIZE;
+        nextBlockIndex = (nextBlockIndex + 1) % NUM_OF_BLOCK_HEADERS;
 
         addTimestamp(newBlockHeader.timestamp);
 
@@ -81,19 +81,19 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
 
     /// @inheritdoc IDoefinBlockHeaderOracle
     function medianBlockTime() public view returns (uint256) {
-        if (timestampCount < TIMESTAMP_SIZE) {
+        if (sortedTimestamps.length < NUM_OF_TIMESTAMPS) {
             revert Errors.BlockHeaderOracle_InsufficientTimeStamps();
         }
 
-        return sortedTimestamps[TIMESTAMP_SIZE / 2];
+        return sortedTimestamps[NUM_OF_TIMESTAMPS / 2];
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
     function getLatestBlockHeader() public view returns (BlockHeader memory) {
-        if(blockHeaders.length == 0) {
+        if (blockHeaders.length == 0) {
             revert Errors.BlockHeaderOracle_NoBlocksAdded();
         }
-        uint256 latestIndex = (nextBlockIndex == 0) ? BLOCK_HEADER_SIZE - 1 : nextBlockIndex - 1;
+        uint256 latestIndex = (nextBlockIndex == 0) ? NUM_OF_BLOCK_HEADERS - 1 : nextBlockIndex - 1;
         return blockHeaders[latestIndex];
     }
 
@@ -103,20 +103,19 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
      * @notice blockNumber The number at which an order can be settled
      */
     function addTimestamp(uint256 timestamp) internal {
-        if (timestampCount < TIMESTAMP_SIZE) {
-            uint256 i = timestampCount;
+        if (sortedTimestamps.length < NUM_OF_TIMESTAMPS) {
+            uint256 i = sortedTimestamps.length;
             while (i > 0 && sortedTimestamps[i - 1] > timestamp) {
                 sortedTimestamps[i] = sortedTimestamps[i - 1];
                 i--;
             }
             sortedTimestamps[i] = timestamp;
-            timestampCount++;
         } else {
-            for (uint256 i = 1; i < TIMESTAMP_SIZE; i++) {
+            for (uint256 i = 1; i < NUM_OF_TIMESTAMPS; i++) {
                 sortedTimestamps[i - 1] = sortedTimestamps[i];
             }
 
-            uint256 i = TIMESTAMP_SIZE - 1;
+            uint256 i = NUM_OF_TIMESTAMPS - 1;
             while (i > 0 && sortedTimestamps[i - 1] > timestamp) {
                 sortedTimestamps[i] = sortedTimestamps[i - 1];
                 i--;
