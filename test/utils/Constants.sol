@@ -96,7 +96,7 @@ abstract contract Constants {
             nBits: 0x17034219,
             nonce: 2_693_788_053
         });
-        blockHeaders[12] = IDoefinBlockHeaderOracle.BlockHeader({
+        blockHeaders[11] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x2af58000,
             prevBlockHash: 0x000000000000000000027dd14f6e5e1fa530ea497eb31b0a9f481c3d7d26544b,
             merkleRootHash: 0xb899b04ec1e021726b2ba9bd48df189e64fa0b5a7e5fcc36532b4d62dad5b807,
@@ -104,7 +104,7 @@ abstract contract Constants {
             nBits: 0x17034219,
             nonce: 686_364_004
         });
-        blockHeaders[13] = IDoefinBlockHeaderOracle.BlockHeader({
+        blockHeaders[12] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x36000000,
             prevBlockHash: 0x000000000000000000016ee91a82962f879e6ed54080a67da5f28185c7edab7b,
             merkleRootHash: 0x2196156490ea5d0ee09a29a31501211f3f36057b97f45bcb3b78eee166060f31,
@@ -112,7 +112,7 @@ abstract contract Constants {
             nBits: 0x17034219,
             nonce: 2_593_830_908
         });
-        blockHeaders[14] = IDoefinBlockHeaderOracle.BlockHeader({
+        blockHeaders[13] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x2d542000,
             prevBlockHash: 0x000000000000000000026bb0108429f3bb9daf888c85ebe846b8af59d1ca7a9a,
             merkleRootHash: 0xdf308c7a701d0d2dad79c19e55f13328657cc1cd7887247fec9d637d892335fe,
@@ -120,7 +120,7 @@ abstract contract Constants {
             nBits: 0x17034219,
             nonce: 240_595_568
         });
-        blockHeaders[15] = IDoefinBlockHeaderOracle.BlockHeader({
+        blockHeaders[14] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x20800000,
             prevBlockHash: 0x000000000000000000004203bc66f562de86821b27ca038f4a3d342a12d55f6c,
             merkleRootHash: 0xfd9b761a2482ebe81592a5d0c3fc5c4101d6cb77ebb8ba0239a6aad6dc573e7e,
@@ -128,13 +128,21 @@ abstract contract Constants {
             nBits: 0x17034219,
             nonce: 1_203_082_080
         });
-        blockHeaders[16] = IDoefinBlockHeaderOracle.BlockHeader({
+        blockHeaders[15] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x20002000,
             prevBlockHash: 0x000000000000000000017b75f32705792f5bf1f350a536b114453d6a2c15056e,
             merkleRootHash: 0x35207066c7854bcf2620029b849b5713730c856939e2cb168047abc971b23ddb,
             timestamp: 1_712_939_989,
             nBits: 0x17034219,
             nonce: 2_267_009_901
+        });
+        blockHeaders[16] = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x21e02000,
+            prevBlockHash: 0x000000000000000000002e334d605c87463e3e063b733f1ab39b3ce33146e87c,
+            merkleRootHash: 0x0c0d616463b1b888ff49c72b65d46a6ba6ee0c9d2c7b0b8d75d64a9364f7c85f,
+            timestamp: 1_712_940_014,
+            nBits: 0x17034219,
+            nonce: 305_767_976
         });
         return blockHeaders;
     }

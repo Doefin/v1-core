@@ -32,7 +32,7 @@ interface IDoefinBlockHeaderOracle {
     }
 
     // Events
-    event BlockSubmitted(bytes32 indexed merkleRootHash);
+    event BlockSubmitted(bytes32 indexed merkleRootHash, uint32 indexed timestamp);
 
     // Interface methods
     /**

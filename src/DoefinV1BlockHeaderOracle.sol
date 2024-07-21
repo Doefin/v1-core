@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.19;
+pragma solidity ^0.8.0;
 
 import { Errors } from "./libraries/Errors.sol";
 import { BlockHeaderUtils } from "./libraries/BlockHeaderUtils.sol";
-import { IDoefinBlockHeaderOracle } from "./interfaces/IDoefinBlockHeaderOracle.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
 import { DoefinV1OptionsManager } from "./DoefinV1OptionsManager.sol";
+import { IDoefinBlockHeaderOracle } from "./interfaces/IDoefinBlockHeaderOracle.sol";
 
 /**
  * @title DoefinV1BlockHeaderOracle
@@ -33,7 +31,10 @@ import { DoefinV1OptionsManager } from "./DoefinV1OptionsManager.sol";
  * After validating the new block header, the contract dispatches the new difficulty to the Options Manager for
  * settlement
  */
-contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
+contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable{
+    // @notice Store the block number separately since the block number is not part of the block header information.
+    uint256 public currentBlockHeight;
+
     /// @notice Track the index of the next block in the ring buffer
     uint256 public nextBlockIndex;
 
@@ -46,18 +47,20 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
     /// @notice Ring buffer to store the block headers
     BlockHeader[NUM_OF_BLOCK_HEADERS] public blockHeaders;
 
-    /// @notice A sorted list of timestamps
-    uint256[NUM_OF_TIMESTAMPS] public sortedTimestamps;
-
-    constructor(BlockHeader[NUM_OF_BLOCK_HEADERS] memory initialBlockHeaders) {
+    constructor(
+        IDoefinBlockHeaderOracle.BlockHeader[NUM_OF_BLOCK_HEADERS] memory initialBlockHistory,
+        uint256 initialBlockHeight
+    ) {
         for (uint256 i = 0; i < NUM_OF_BLOCK_HEADERS; ++i) {
-            blockHeaders[i] = initialBlockHeaders[i];
-            addTimestamp(initialBlockHeaders[i].timestamp);
+            blockHeaders[i] = initialBlockHistory[i];
         }
+
+        nextBlockIndex = 0;
+        currentBlockHeight = initialBlockHeight;
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
-    function submitNextBlock(BlockHeader calldata newBlockHeader) public {
+    function submitNextBlock(BlockHeader calldata newBlockHeader) external {
         BlockHeader memory currentBlockHeader = getLatestBlockHeader();
         if (newBlockHeader.prevBlockHash != BlockHeaderUtils.calculateBlockHash(currentBlockHeader)) {
             revert Errors.BlockHeaderOracle_PrevBlockHashMismatch();
@@ -73,54 +76,27 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
 
         blockHeaders[nextBlockIndex] = newBlockHeader;
         nextBlockIndex = (nextBlockIndex + 1) % NUM_OF_BLOCK_HEADERS;
+        ++currentBlockHeight;
 
-        addTimestamp(newBlockHeader.timestamp);
-
-        emit BlockSubmitted(newBlockHeader.merkleRootHash);
+        emit BlockSubmitted(newBlockHeader.merkleRootHash, newBlockHeader.timestamp);
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
     function medianBlockTime() public view returns (uint256) {
-        if (sortedTimestamps.length < NUM_OF_TIMESTAMPS) {
-            revert Errors.BlockHeaderOracle_InsufficientTimeStamps();
+        uint256[NUM_OF_TIMESTAMPS] memory timestamps;
+
+        for (uint256 i = 0; i < NUM_OF_TIMESTAMPS; ++i) {
+            uint256 j = (nextBlockIndex + 6) % NUM_OF_BLOCK_HEADERS;
+            timestamps[i] = blockHeaders[j].timestamp;
         }
 
-        return sortedTimestamps[NUM_OF_TIMESTAMPS / 2];
+        return BlockHeaderUtils.median(timestamps);
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
     function getLatestBlockHeader() public view returns (BlockHeader memory) {
-        if (blockHeaders.length == 0) {
-            revert Errors.BlockHeaderOracle_NoBlocksAdded();
-        }
-        uint256 latestIndex = (nextBlockIndex == 0) ? NUM_OF_BLOCK_HEADERS - 1 : nextBlockIndex - 1;
-        return blockHeaders[latestIndex];
+        uint256 currentBlockIndex = ((nextBlockIndex + NUM_OF_BLOCK_HEADERS) - 1) % NUM_OF_BLOCK_HEADERS;
+        return blockHeaders[currentBlockIndex];
     }
 
-    /**
-     * @dev Add timestamps to the sorted list of timestamps
-     * @param timestamp The timestamp from the latest block header
-     * @notice blockNumber The number at which an order can be settled
-     */
-    function addTimestamp(uint256 timestamp) internal {
-        if (sortedTimestamps.length < NUM_OF_TIMESTAMPS) {
-            uint256 i = sortedTimestamps.length;
-            while (i > 0 && sortedTimestamps[i - 1] > timestamp) {
-                sortedTimestamps[i] = sortedTimestamps[i - 1];
-                i--;
-            }
-            sortedTimestamps[i] = timestamp;
-        } else {
-            for (uint256 i = 1; i < NUM_OF_TIMESTAMPS; i++) {
-                sortedTimestamps[i - 1] = sortedTimestamps[i];
-            }
-
-            uint256 i = NUM_OF_TIMESTAMPS - 1;
-            while (i > 0 && sortedTimestamps[i - 1] > timestamp) {
-                sortedTimestamps[i] = sortedTimestamps[i - 1];
-                i--;
-            }
-            sortedTimestamps[i] = timestamp;
-        }
-    }
 }
