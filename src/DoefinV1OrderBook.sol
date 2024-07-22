@@ -52,7 +52,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address allowed
+        address[] memory allowed
     )
         public
         returns (uint256)
@@ -79,7 +79,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
             exerciseWindowStart: block.timestamp,
             exerciseWindowEnd: 0,
             writer: msg.sender,
-            counterparty: allowed,
+            allowed: allowed,
+            counterparty: address(0),
             payOffAmount: amount,
             initialStrike: strike,
             finalStrike: 0,
@@ -105,8 +106,18 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
             revert Errors.OrderBook_MatchOrderExpired();
         }
 
-        if (order.counterparty != address(0) && msg.sender != order.counterparty) {
-            revert Errors.OrderBook_MatchOrderNotAllowed();
+        address[] memory allowed = order.allowed;
+        if (allowed.length > 0) {
+            bool isAllowed = false;
+            for (uint256 i = 0; i < allowed.length; i++) {
+                if (allowed[i] == msg.sender) {
+                    isAllowed = true;
+                }
+            }
+
+            if (!isAllowed) {
+                revert Errors.OrderBook_MatchOrderNotAllowed();
+            }
         }
 
         uint256 balBefore = IERC20(collateralToken).balanceOf(address(this));

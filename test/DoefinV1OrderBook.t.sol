@@ -35,14 +35,17 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address allowed
+        address counterparty
     )
         public
     {
         vm.assume(strike == 0);
         vm.assume(expiry != 0);
-        vm.assume(allowed != address(0));
+        vm.assume(counterparty != address(0));
         vm.assume(amount >= minCollateralTokenAmount);
+
+        address[] memory allowed = new address[](1);
+        allowed[0] = counterparty;
 
         orderBook.createOrder(strike, amount, expiry, isLong, allowed);
     }
@@ -52,14 +55,17 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address allowed
+        address counterparty
     )
         public
     {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
-        vm.assume(allowed != address(0));
+        vm.assume(counterparty != address(0));
         vm.assume(amount < minCollateralTokenAmount);
+
+        address[] memory allowed = new address[](1);
+        allowed[0] = counterparty;
 
         orderBook.createOrder(strike, amount, expiry, isLong, allowed);
     }
@@ -69,14 +75,17 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address allowed
+        address counterparty
     )
         public
     {
         vm.assume(strike != 0);
         vm.assume(expiry == 0);
-        vm.assume(allowed != address(0));
+        vm.assume(counterparty != address(0));
         vm.assume(amount >= minCollateralTokenAmount);
+
+        address[] memory allowed = new address[](1);
+        allowed[0] = counterparty;
 
         orderBook.createOrder(strike, amount, expiry, isLong, allowed);
     }
@@ -86,14 +95,17 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address allowed
+        address counterparty
     )
         public
     {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
-        vm.assume(allowed != address(0));
+        vm.assume(counterparty != address(0));
         vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
+
+        address[] memory allowed = new address[](1);
+        allowed[0] = counterparty;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -102,11 +114,14 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.safeTransferFrom(users.alice, users.broker, orderId, 1, "");
     }
 
-    function test__createOrder(uint256 strike, uint256 amount, uint256 expiry, bool isLong, address allowed) public {
+    function test__createOrder(uint256 strike, uint256 amount, uint256 expiry, bool isLong, address counterparty) public {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
-        vm.assume(allowed != address(0));
+        vm.assume(counterparty != address(0));
         vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
+
+        address[] memory allowed = new address[](1);
+        allowed[0] = counterparty;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -126,15 +141,18 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address allowed
+        address counterparty
     )
         public
     {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(allowed != address(0));
+        vm.assume(counterparty != address(0));
         vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
+
+        address[] memory allowed = new address[](1);
+        allowed[0] = counterparty;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -153,15 +171,18 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address allowed
+        address counterparty
     )
         public
     {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(allowed != address(0) && allowed != users.broker);
+        vm.assume(counterparty != address(0) && counterparty != users.broker);
         vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
+
+        address[] memory allowed = new address[](1);
+        allowed[0] = counterparty;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
@@ -179,19 +200,22 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address allowed
+        address counterparty
     )
         public
     {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(allowed != address(0));
+        vm.assume(counterparty != address(0));
         vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
+
+        address[] memory allowed = new address[](1);
+        allowed[0] = users.broker;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, users.broker);
+        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -217,7 +241,10 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, address(0));
+
+        address[] memory allowed = new address[](0);
+
+        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -253,9 +280,12 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
+        address[] memory allowed = new address[](1);
+        allowed[0] = users.broker;
+
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, users.broker);
+        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -286,19 +316,22 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address allowed
+        address counterparty
     )
         public
     {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(allowed != address(0));
+        vm.assume(counterparty != address(0));
         vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
+
+        address[] memory allowed = new address[](1);
+        allowed[0] = users.broker;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, users.broker);
+        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -315,7 +348,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address allowed,
+        address counterparty,
         uint256 blockNumber,
         uint256 difficulty
     )
@@ -324,13 +357,16 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(allowed != address(0));
+        vm.assume(counterparty != address(0));
         vm.assume(blockNumber > expiry);
         vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
+        address[] memory allowed = new address[](1);
+        allowed[0] = users.broker;
+
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, users.broker);
+        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -352,7 +388,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address allowed,
+        address counterparty,
         uint256 blockNumber,
         uint256 difficulty
     )
@@ -361,13 +397,17 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(allowed != address(0));
+        vm.assume(counterparty != address(0));
         vm.assume(blockNumber > expiry);
         vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, users.broker);
+
+        address[] memory allowed = new address[](1);
+        allowed[0] = users.broker;
+
+        uint256 orderId = orderBook.createOrder(strike, amount, expiry, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
