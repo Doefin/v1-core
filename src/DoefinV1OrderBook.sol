@@ -112,6 +112,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
             for (uint256 i = 0; i < allowed.length; i++) {
                 if (allowed[i] == msg.sender) {
                     isAllowed = true;
+                    break;
                 }
             }
 
