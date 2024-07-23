@@ -6,6 +6,10 @@ struct Users {
     address payable admin;
     // User Alice.
     address payable alice;
+    // User Alice.
+    address payable james;
+    // User Alice.
+    address payable rick;
     // User broker.
     address payable broker;
     // User Fee Address
