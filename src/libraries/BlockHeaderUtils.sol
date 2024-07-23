@@ -42,16 +42,6 @@ library BlockHeaderUtils {
         pure
         returns (bytes32)
     {
-        //        bytes32 hash = blockHeader.prevBlockHash;
-        //        bytes32 root = blockHeader.merkleRootHash;
-        //
-        //        bytes memory prevBlockHash = new bytes(32);
-        //        bytes memory merkleRootHash = new bytes(32);
-        //        assembly {
-        //            mstore(add(prevBlockHash, 32), hash)
-        //            mstore(add(merkleRootHash, 32), root)
-        //        }
-
         //1. Reverse the byte order of each block header field to match the little-endian format required by Bitcoin
         //2. Serialize the block header into an 80-byte array: (4 + 32 + 32 + 4 + 4 + 4) bytes
         bytes memory data = abi.encodePacked(
