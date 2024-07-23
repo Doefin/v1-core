@@ -30,6 +30,8 @@ interface IDoefinV1OrderBook {
      * @param isSettled Bool to determine whether a binary option is settled
      * @param exerciseWindowStart The timestamp from when the option can start to be exercised.
      * @param exerciseWindowEnd The timestamp after which the option can no longer be exercised.
+     * @param allowed Addresses that are allowed to buy the issuance. If the array is empty, all addresses are allowed
+     *        to buy the issuance.
      */
     struct BinaryOption {
         uint256 amount;
@@ -40,6 +42,7 @@ interface IDoefinV1OrderBook {
         uint256 finalStrike;
         address collateralToken;
         address counterparty;
+        address[] allowed;
         uint256 payOffAmount;
         uint256 expiry;
         bool isSettled;
@@ -121,7 +124,7 @@ interface IDoefinV1OrderBook {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address allowed
+        address[] calldata allowed
     )
         external
         returns (uint256);
