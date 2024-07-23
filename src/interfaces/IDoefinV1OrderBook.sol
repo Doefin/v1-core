@@ -124,7 +124,7 @@ interface IDoefinV1OrderBook {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address[] memory allowed
+        address[] calldata allowed
     )
         external
         returns (uint256);

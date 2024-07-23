@@ -42,6 +42,8 @@ abstract contract Base_Test is Test, Assertions, Constants {
         users = Users({
             admin: createUser("Admin"),
             alice: createUser("Alice"),
+            james: createUser("James"),
+            rick: createUser("Rick"),
             broker: createUser("Broker"),
             feeAddress: createUser("FeeAddress")
         });

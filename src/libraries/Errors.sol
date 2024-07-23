@@ -52,4 +52,7 @@ library Errors {
 
     /// @notice Thrown when the match order amount is incorrect
     error OrderBook_UnableToMatchOrder();
+
+    /// @notice Thrown when the order is already matched
+    error OrderBook_OrderAlreadyMatched();
 }

@@ -52,9 +52,9 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         uint256 amount,
         uint256 expiry,
         bool isLong,
-        address[] memory allowed
+        address[] calldata allowed
     )
-        public
+        external
         returns (uint256)
     {
         if (strike == 0) {
@@ -97,13 +97,17 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     }
 
     //@@inheritdoc
-    function matchOrder(uint256 orderId) public {
+    function matchOrder(uint256 orderId) external {
         BinaryOption storage order = orders[orderId];
         uint256 amount = order.amount;
         uint256 premium = (amount * 2) / 100; //1% of bet amount
 
         if (block.timestamp > order.exerciseWindowStart) {
             revert Errors.OrderBook_MatchOrderExpired();
+        }
+
+        if (order.counterparty != address(0)) {
+            revert Errors.OrderBook_OrderAlreadyMatched();
         }
 
         address[] memory allowed = order.allowed;
@@ -138,7 +142,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     }
 
     //@@inheritdoc
-    function exerciseOrder(uint256 orderId) public returns (uint256) {
+    function exerciseOrder(uint256 orderId) external returns (uint256) {
         BinaryOption storage order = orders[orderId];
         address winner;
 
@@ -174,7 +178,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         uint256 blockNumber,
         uint256 difficulty
     )
-        public
+        external
         onlyOptionsManager
         returns (bool)
     {
@@ -188,7 +192,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     }
 
     //@@inheritdoc
-    function getOrder(uint256 orderId) public view returns (BinaryOption memory) {
+    function getOrder(uint256 orderId) external view returns (BinaryOption memory) {
         return orders[orderId];
     }
 
