@@ -109,7 +109,14 @@ contract DoefinV1OptionsManager_Test is Base_Test {
         optionsManager.settleOrders(blockNumber, timestamp, difficulty);
     }
 
-    function test_settleOrders(address blockHeaderOracle, uint256 blockNumber, uint256 difficulty, uint256 timestamp) public {
+    function test_settleOrders(
+        address blockHeaderOracle,
+        uint256 blockNumber,
+        uint256 difficulty,
+        uint256 timestamp
+    )
+        public
+    {
         vm.assume(blockHeaderOracle != address(0));
         vm.assume(timestamp != 0);
 

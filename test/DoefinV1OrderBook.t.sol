@@ -110,7 +110,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
 
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
+        uint256 orderId =
+            orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
         orderBook.safeTransferFrom(users.alice, users.broker, orderId, 1, "");
     }
 
@@ -137,7 +138,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.expectEmit();
         emit IDoefinV1OrderBook.OrderCreated(0);
 
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
+        uint256 orderId =
+            orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
         assertEq(orderBook.balanceOf(users.alice, orderId), 1);
     }
 
@@ -164,7 +166,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
+        uint256 orderId =
+            orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -194,7 +197,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
+        uint256 orderId =
+            orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -223,7 +227,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
+        uint256 orderId =
+            orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -245,7 +250,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         address[] memory allowed = new address[](0);
 
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
+        uint256 orderId =
+            orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -290,7 +296,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
+        uint256 orderId =
+            orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -333,7 +340,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
+        uint256 orderId =
+            orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(counterparty);
@@ -380,7 +388,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
+        uint256 orderId =
+            orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -417,7 +426,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), amount);
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
+        uint256 orderId =
+            orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -460,7 +470,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
         address[] memory allowed = new address[](1);
         allowed[0] = users.broker;
 
-        uint256 orderId = orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
+        uint256 orderId =
+            orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.BlockNumber, isLong, allowed);
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -470,7 +481,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
 
         vm.startBroadcast(orderBook.optionsManager());
-        orderBook.settleOrder(orderId, blockNumber, timestamp,difficulty);
+        orderBook.settleOrder(orderId, blockNumber, timestamp, difficulty);
         vm.stopBroadcast();
 
         address winner;
