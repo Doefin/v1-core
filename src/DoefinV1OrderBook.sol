@@ -186,14 +186,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         returns (bool)
     {
         BinaryOption storage order = orders[orderId];
-        bool expiryIsValid = false;
-
-        if (
-            (order.expiryType == ExpiryType.BlockNumber && blockNumber >= order.expiry)
-                || (order.expiryType == ExpiryType.Timestamp && timestamp >= order.expiry)
-        ) {
-            expiryIsValid = true;
-        }
+        bool expiryIsValid = (order.expiryType == ExpiryType.BlockNumber && blockNumber >= order.expiry)
+                || (order.expiryType == ExpiryType.Timestamp && timestamp >= order.expiry);
 
         if (order.counterparty != address(0) && expiryIsValid) {
             order.isSettled = true;
