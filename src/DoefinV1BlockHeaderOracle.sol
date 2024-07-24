@@ -31,7 +31,7 @@ import { IDoefinBlockHeaderOracle } from "./interfaces/IDoefinBlockHeaderOracle.
  * After validating the new block header, the contract dispatches the new difficulty to the Options Manager for
  * settlement
  */
-contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable{
+contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
     // @notice Store the block number separately since the block number is not part of the block header information.
     uint256 public currentBlockHeight;
 
@@ -98,5 +98,4 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable{
         uint256 currentBlockIndex = ((nextBlockIndex + NUM_OF_BLOCK_HEADERS) - 1) % NUM_OF_BLOCK_HEADERS;
         return blockHeaders[currentBlockIndex];
     }
-
 }
