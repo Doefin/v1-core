@@ -445,9 +445,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
     }
 
     function test__exerciseOrder(
-        uint256 strike,
-        uint256 amount,
-        uint256 expiry,
+        uint256 strike, uint256 amount, uint256 expiry,
         uint256 timestamp,
         bool isLong,
         address counterparty,
