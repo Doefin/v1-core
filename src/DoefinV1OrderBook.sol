@@ -51,6 +51,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         uint256 strike,
         uint256 amount,
         uint256 expiry,
+        ExpiryType expiryType,
         bool isLong,
         address[] calldata allowed
     )
@@ -76,6 +77,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
             position: isLong ? Position.Long : Position.Short,
             collateralToken: address(collateralToken),
             expiry: expiry,
+            expiryType: expiryType,
             exerciseWindowStart: block.timestamp,
             exerciseWindowEnd: 0,
             writer: msg.sender,
@@ -176,6 +178,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     function settleOrder(
         uint256 orderId,
         uint256 blockNumber,
+        uint256 timestamp,
         uint256 difficulty
     )
         external
@@ -183,7 +186,10 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         returns (bool)
     {
         BinaryOption storage order = orders[orderId];
-        if (order.counterparty != address(0) && blockNumber >= order.expiry) {
+        bool expiryIsValid = (order.expiryType == ExpiryType.BlockNumber && blockNumber >= order.expiry)
+            || (order.expiryType == ExpiryType.Timestamp && timestamp >= order.expiry);
+
+        if (order.counterparty != address(0) && expiryIsValid) {
             order.isSettled = true;
             order.finalStrike = difficulty;
         }

@@ -57,10 +57,10 @@ contract DoefinV1OptionsManager is IDoefinOptionsManager, Ownable {
     }
 
     //@@inheritdoc
-    function settleOrders(uint256 blockNumber, uint256 difficulty) public onlyBlockHeaderOracle {
+    function settleOrders(uint256 blockNumber, uint256 timestamp, uint256 difficulty) public onlyBlockHeaderOracle {
         uint256 len = registeredOrderIds.length;
         for (uint256 i = 0; i < len; i++) {
-            IDoefinV1OrderBook(orderBook).settleOrder(registeredOrderIds[i], blockNumber, difficulty);
+            IDoefinV1OrderBook(orderBook).settleOrder(registeredOrderIds[i], blockNumber, timestamp, difficulty);
             registeredOrderIds[i] = registeredOrderIds[len - 1];
             registeredOrderIds.pop();
             len--;

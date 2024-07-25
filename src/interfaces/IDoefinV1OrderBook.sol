@@ -7,12 +7,16 @@ pragma solidity ^0.8.0;
  * This interface allows for the interaction with financial derivatives known as vanilla options on Ethereum.
  */
 interface IDoefinV1OrderBook {
-    /**
-     * @dev Side of the option.
-     */
+    /// @notice Side of the option.
     enum Position {
         Long,
         Short
+    }
+
+    /// @notice The expiry type of the order to be created
+    enum ExpiryType {
+        BlockNumber,
+        Timestamp
     }
 
     /**
@@ -27,6 +31,7 @@ interface IDoefinV1OrderBook {
      * @param payOffAmount The fixed amount to pay if the condition is met
      * @param finalStrike The strike value of the bitcoin difficulty at settlement
      * @param expiry The block number at which the strike is expected to be evaluated
+     * @param expiryType The expiry type of the order to be created {BlockNumber or Timestamp}
      * @param isSettled Bool to determine whether a binary option is settled
      * @param exerciseWindowStart The timestamp from when the option can start to be exercised.
      * @param exerciseWindowEnd The timestamp after which the option can no longer be exercised.
@@ -45,6 +50,7 @@ interface IDoefinV1OrderBook {
         address[] allowed;
         uint256 payOffAmount;
         uint256 expiry;
+        ExpiryType expiryType;
         bool isSettled;
         uint256 exerciseWindowStart;
         uint256 exerciseWindowEnd;
@@ -115,7 +121,8 @@ interface IDoefinV1OrderBook {
      * @dev Struct to store essential details about a vanilla option.
      * @param strike The difficulty of BTC at a specified expiry
      * @param amount The amount of the underlying asset that the option covers.
-     * @param expiry The block number at which the strike is expected to be evaluated
+     * @param expiry The block number or timestamp at which the strike is expected to be evaluated
+     * @param expiryType The expiry type of the order to be created
      * @param allowed Addresses that are allowed to buy the issuance. If the array is empty, all addresses are allowed
      *        to buy the issuance.
      */
@@ -123,6 +130,7 @@ interface IDoefinV1OrderBook {
         uint256 strike,
         uint256 amount,
         uint256 expiry,
+        ExpiryType expiryType,
         bool isLong,
         address[] calldata allowed
     )
@@ -146,9 +154,17 @@ interface IDoefinV1OrderBook {
      * @dev Settle an order that has been registered for settlement in the options manager
      * @param orderId The order id of the order to match
      * @param blockNumber The number at which an order can be settled
+     * @param timestamp The timestamp of the block at which an order can be settled
      * @param difficulty The difficulty at the specified block number
      */
-    function settleOrder(uint256 orderId, uint256 blockNumber, uint256 difficulty) external returns (bool);
+    function settleOrder(
+        uint256 orderId,
+        uint256 blockNumber,
+        uint256 timestamp,
+        uint256 difficulty
+    )
+        external
+        returns (bool);
 
     /**
      * @dev Get Binary options order
