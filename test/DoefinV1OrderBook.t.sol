@@ -510,7 +510,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 blockNumber,
         uint256 difficulty
     )
-    public
+        public
     {
         uint256 expiry = block.timestamp + 2 days;
 
