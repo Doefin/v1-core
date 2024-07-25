@@ -444,7 +444,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.exerciseOrder(orderId);
     }
 
-    function test__exerciseOrder(
+    function test__exerciseOrderWhenExpiryIsBlockNumber(
         uint256 strike,
         uint256 amount,
         uint256 expiry,
@@ -454,7 +454,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 blockNumber,
         uint256 difficulty
     )
-        public
+    public
     {
         uint256 expiry = block.timestamp + 2 days;
 
@@ -489,6 +489,62 @@ contract DoefinV1OrderBook_Test is Base_Test {
         if (
             order.position == IDoefinV1OrderBook.Position.Long && order.finalStrike > order.initialStrike
                 || order.position == IDoefinV1OrderBook.Position.Short && order.finalStrike < order.initialStrike
+        ) {
+            winner = order.writer;
+        } else {
+            winner = order.counterparty;
+        }
+
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderExercised(orderId, orderBook.getOrder(orderId).payOffAmount, winner);
+        orderBook.exerciseOrder(orderId);
+    }
+
+    function test__exerciseOrderWhenExpiryIsTimestamp(
+        uint256 strike,
+        uint256 amount,
+        uint256 expiry,
+        uint256 timestamp,
+        bool isLong,
+        address counterparty,
+        uint256 blockNumber,
+        uint256 difficulty
+    )
+    public
+    {
+        uint256 expiry = block.timestamp + 2 days;
+
+        vm.assume(strike != 0);
+        vm.assume(timestamp > expiry);
+        vm.assume(counterparty != address(0));
+        vm.assume(blockNumber != 0);
+        vm.assume(amount >= minCollateralTokenAmount && amount <= depositBound);
+
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), amount);
+
+        address[] memory allowed = new address[](1);
+        allowed[0] = users.broker;
+
+        uint256 orderId =
+                            orderBook.createOrder(strike, amount, expiry, IDoefinV1OrderBook.ExpiryType.Timestamp, isLong, allowed);
+        vm.stopBroadcast();
+
+        vm.startBroadcast(users.broker);
+        dai.approve(address(orderBook), amount);
+
+        orderBook.matchOrder(orderId);
+        vm.stopBroadcast();
+
+        vm.startBroadcast(orderBook.optionsManager());
+        orderBook.settleOrder(orderId, blockNumber, timestamp, difficulty);
+        vm.stopBroadcast();
+
+        address winner;
+        IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
+        if (
+            order.position == IDoefinV1OrderBook.Position.Long && order.finalStrike > order.initialStrike
+            || order.position == IDoefinV1OrderBook.Position.Short && order.finalStrike < order.initialStrike
         ) {
             winner = order.writer;
         } else {
