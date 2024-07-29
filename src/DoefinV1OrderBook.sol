@@ -5,11 +5,12 @@ import { Errors } from "./libraries/Errors.sol";
 import { IDoefinOptionsManager } from "./interfaces/IDoefinOptionsManager.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import { IDoefinV1OrderBook } from "./interfaces/IDoefinV1OrderBook.sol";
+import {IDoefinV1OrderBook} from "./interfaces/IDoefinV1OrderBook.sol";
+import {IDoefinConfig} from "./interfaces/IDoefinConfig.sol";
 
 contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
-    /// @notice The ERC20 token used as strike token in the trading pair
-    IERC20 public immutable collateralToken;
+    /// @notice Doefin Config
+    IDoefinConfig public immutable config;
 
     /// @notice The minimum collateral token amount required for an order to be valid
     uint256 public immutable minCollateralTokenAmount;
@@ -31,17 +32,12 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         _;
     }
 
-    constructor(address _collateralToken, uint256 _minCollateralTokenAmount, address _optionsManager) ERC1155("") {
-        if (_minCollateralTokenAmount == 0) {
-            revert Errors.OrderBook_InvalidMinCollateralAmount();
-        }
-
-        if (_collateralToken == address(0) || _optionsManager == address(0)) {
+    constructor(address _config, address _optionsManager) ERC1155("") {
+        if (_config == address(0) || _optionsManager == address(0)) {
             revert Errors.ZeroAddress();
         }
 
-        collateralToken = IERC20(_collateralToken);
-        minCollateralTokenAmount = _minCollateralTokenAmount;
+        config = IDoefinConfig(_config);
         optionsManager = _optionsManager;
         optionsFeeAddress = IDoefinOptionsManager(optionsManager).getOptionsFeeAddress();
     }
@@ -53,6 +49,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         uint256 expiry,
         ExpiryType expiryType,
         bool isLong,
+        address collateralToken,
         address[] calldata allowed
     )
         external
@@ -62,7 +59,11 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
             revert Errors.OrderBook_ZeroStrike();
         }
 
-        if (amount < minCollateralTokenAmount) {
+        if (collateralToken == address(0) || !config.tokenIsInApprovedList(collateralToken)) {
+            revert Errors.OrderBook_InvalidCollateralToken();
+        }
+
+        if (amount < config.getApprovedToken(collateralToken).minCollateralTokenAmount) {
             revert Errors.OrderBook_InvalidMinCollateralAmount();
         }
 
@@ -127,16 +128,16 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
             }
         }
 
-        uint256 balBefore = IERC20(collateralToken).balanceOf(address(this));
-        IERC20(collateralToken).transferFrom(msg.sender, address(this), amount);
-        if (IERC20(collateralToken).balanceOf(address(this)) - balBefore != amount) {
+        uint256 balBefore = IERC20(order.collateralToken).balanceOf(address(this));
+        IERC20(order.collateralToken).transferFrom(msg.sender, address(this), amount);
+        if (IERC20(order.collateralToken).balanceOf(address(this)) - balBefore != amount) {
             revert Errors.OrderBook_UnableToMatchOrder();
         }
 
         order.counterparty = msg.sender;
         order.premium = premium;
         order.payOffAmount += amount - premium;
-        IERC20(collateralToken).transfer(optionsFeeAddress, premium);
+        IERC20(order.collateralToken).transfer(optionsFeeAddress, premium);
 
         _mint(msg.sender, orderId, 1, "");
         _registerOrderForSettlement(orderId);
@@ -164,10 +165,10 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
                 || order.position == Position.Short && order.finalStrike < order.initialStrike
         ) {
             winner = order.writer;
-            IERC20(collateralToken).transfer(order.writer, order.payOffAmount);
+            IERC20(order.collateralToken).transfer(order.writer, order.payOffAmount);
         } else {
             winner = order.counterparty;
-            IERC20(collateralToken).transfer(order.counterparty, order.payOffAmount);
+            IERC20(order.collateralToken).transfer(order.counterparty, order.payOffAmount);
         }
 
         emit OrderExercised(orderId, order.payOffAmount, winner);

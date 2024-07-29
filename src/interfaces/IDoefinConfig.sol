@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19;
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/// @title IDoefinFactory
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+/// @title IDoefinConfig
 /// @notice This interface defines the important functions to setup the DeofinV1 OrderBook
 interface IDoefinConfig {
     struct ApprovedToken {
@@ -30,24 +31,6 @@ interface IDoefinConfig {
     /*//////////////////////////////////////////////////////////////////////////
                                NON-CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
-
-//    /// @notice Creates a new orderBook
-//    function createOrderBook(
-//        address collateralToken,
-//        uint256 minStrikeAmount,
-//        address optionsManager
-//    )
-//        external
-//        returns (address);
-//
-//    /// @notice Creates a new options manager
-//    function createOptionsManager(
-//        address orderBook,
-//        address blockHeaderOracle,
-//        address optionsFeeAddress
-//    )
-//        external
-//        returns (address);
 
     /// @notice Updates the token approved list
     /// @param token Token to add to the approved list

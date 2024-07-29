@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19;
 
-import { Errors } from "./libraries/Errors.sol";
-import { IDoefinV1OrderBook } from "./DoefinV1OrderBook.sol";
-import { IDoefinFactory } from "./interfaces/IDoefinFactory.sol";
-import { IDoefinOptionsManager } from "./interfaces/IDoefinOptionsManager.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Errors} from "./libraries/Errors.sol";
+import {IDoefinV1OrderBook} from "./DoefinV1OrderBook.sol";
+import {IDoefinConfig} from "./interfaces/IDoefinConfig.sol";
+import {IDoefinOptionsManager} from "./interfaces/IDoefinOptionsManager.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-/// @title DoefinV1Factory
-/// @notice See the documentation in {IDoefinFactory}.
+/// @title DoefinV1OptionsManager
+/// @notice See the documentation in {IDoefinOptionsManager}.
 contract DoefinV1OptionsManager is IDoefinOptionsManager, Ownable {
     /*//////////////////////////////////////////////////////////////////////////
                                    PUBLIC STORAGE

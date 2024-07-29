@@ -17,7 +17,7 @@ library Errors {
     error ZeroAddress();
 
     /*//////////////////////////////////////////////////////////////////////////
-                                    FACTORY
+                                    CONFIG
     //////////////////////////////////////////////////////////////////////////*/
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -55,6 +55,9 @@ library Errors {
 
     /// @notice Thrown when the order is already matched
     error OrderBook_OrderAlreadyMatched();
+
+    /// @notice Thrown when collateral token is not valid
+    error OrderBook_InvalidCollateralToken();
 
     /*//////////////////////////////////////////////////////////////////////////
                               BLOCK HEADER ORACLE
