@@ -15,7 +15,7 @@ contract DoefinV1Factory is IDoefinFactory, Ownable {
     /*//////////////////////////////////////////////////////////////////////////
                                    PUBLIC STORAGE
     //////////////////////////////////////////////////////////////////////////*/
-    mapping(address => bool) public approvedTokensList;
+    mapping(address => ApprovedToken) public approvedTokens;
     mapping(address => OrderBook) public orderBooks;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -39,7 +39,7 @@ contract DoefinV1Factory is IDoefinFactory, Ownable {
         onlyOwner
         returns (address orderBookAddress)
     {
-        orderBookAddress = address(new DoefinV1OrderBook(collateralToken, minCollateralTokenAmount, optionsManager));
+        orderBookAddress = address(new DoefinV1OrderBook(collateralToken, optionsManager));
         orderBooks[orderBookAddress] = OrderBook(orderBookAddress);
         emit OrderBookCreated(orderBookAddress);
         return orderBookAddress;
@@ -62,12 +62,20 @@ contract DoefinV1Factory is IDoefinFactory, Ownable {
     }
 
     //@@inheritdoc IDoefinFactory
-    function addTokenToApprovedList(address token) external override onlyOwner {
+    function addTokenToApprovedList(address token, uint256 minCollateralTokenAmount) external override onlyOwner {
         if (token == address(0)) {
             revert Errors.ZeroAddress();
         }
 
-        approvedTokensList[token] = true;
+        if (minCollateralTokenAmount == 0) {
+            revert Errors.OrderBook_InvalidMinCollateralAmount(); //todo rename this error
+        }
+
+        approvedTokens[token] = ApprovedToken({
+            token: IERC20(token),
+            minCollateralTokenAmount: minCollateralTokenAmount
+        });
+
         emit AddTokenToApprovedList(token);
     }
 
@@ -77,12 +85,18 @@ contract DoefinV1Factory is IDoefinFactory, Ownable {
             revert Errors.ZeroAddress();
         }
 
-        delete approvedTokensList[token];
+        delete approvedTokens[token];
         emit RemoveTokenFromApprovedList(token);
     }
 
     //@@inheritdoc IDoefinFactory
-    function getOrderBook(address orderBookAddress) external view returns (OrderBook memory) {
-        return orderBooks[orderBookAddress];
+    function tokenIsInApprovedList(address token) external returns (bool) {
+        return address(approvedTokens[token].token) != address(0);
+    }
+
+
+    //@@inheritdoc IDoefinFactory
+    function getApprovedToken(address token) external view returns (ApprovedToken memory) {
+        return approvedTokens[token];
     }
 }
