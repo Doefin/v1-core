@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19 <0.9.0;
 
-import { Users } from "./utils/Types.sol";
-import { Constants } from "./utils/Constants.sol";
+import {Users} from "./utils/Types.sol";
+import {Constants} from "./utils/Constants.sol";
 import {Assertions} from "./utils/Assertions.sol";
 import {DoefinV1Config, IDoefinConfig} from "../src/DoefinV1Config.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { Test } from "forge-std/Test.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Test} from "forge-std/Test.sol";
 
 /// @notice Base test contract with common logic needed by all tests.
 abstract contract Base_Test is Test, Assertions, Constants {
