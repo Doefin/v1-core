@@ -11,7 +11,7 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
 
     function setUp() public virtual override {
         Base_Test.setUp();
-        Base_Test.deployFactory();
+        Base_Test.deployConfig();
 
         blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886);
     }

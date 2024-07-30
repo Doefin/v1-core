@@ -123,6 +123,8 @@ interface IDoefinV1OrderBook {
      * @param amount The amount of the underlying asset that the option covers.
      * @param expiry The block number or timestamp at which the strike is expected to be evaluated
      * @param expiryType The expiry type of the order to be created
+     * @param isLong The position of the order
+     * @param collateralToken The collateral token the order is created in
      * @param allowed Addresses that are allowed to buy the issuance. If the array is empty, all addresses are allowed
      *        to buy the issuance.
      */
@@ -132,6 +134,7 @@ interface IDoefinV1OrderBook {
         uint256 expiry,
         ExpiryType expiryType,
         bool isLong,
+        address collateralToken,
         address[] calldata allowed
     )
         external

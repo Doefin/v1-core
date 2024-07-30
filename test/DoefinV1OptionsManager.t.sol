@@ -8,18 +8,17 @@ import { IDoefinOptionsManager, DoefinV1OptionsManager } from "../src/DoefinV1Op
 
 /// @title DoefinV1OptionsManager_Test
 contract DoefinV1OptionsManager_Test is Base_Test {
+    address public blockHeaderOracle;
     DoefinV1OrderBook public orderBook;
     DoefinV1OptionsManager public optionsManager;
     uint256 public constant minCollateralTokenTokenAmount = 100;
 
     function setUp() public virtual override {
         Base_Test.setUp();
-        Base_Test.deployFactory();
+        Base_Test.deployConfig();
 
-        optionsManager = DoefinV1OptionsManager(factory.createOptionsManager(address(0), address(0), users.feeAddress));
-        orderBook = DoefinV1OrderBook(
-            factory.createOrderBook(address(dai), minCollateralTokenTokenAmount, address(optionsManager))
-        );
+        optionsManager = new DoefinV1OptionsManager(address(0), blockHeaderOracle, users.feeAddress);
+        orderBook = new DoefinV1OrderBook(address(config), address(optionsManager));
     }
 
     function test_SetOrderBookAddress_NotOwner(address notOwner) public {
