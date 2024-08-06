@@ -29,8 +29,14 @@ library Errors {
     /// @notice Thrown when amount is zero
     error OrderBook_ZeroAmount();
 
+    /// @notice Thrown when notional is not correct
+    error OrderBook_InvalidNotional();
+
     /// @notice Thrown when expiry is zero
     error OrderBook_ZeroExpiry();
+
+    /// @notice Thrown when a amount is less than the min collateral amount
+    error OrderBook_LessThanMinCollateralAmount();
 
     /// @notice Thrown when min strike amount is zero
     error OrderBook_InvalidMinCollateralAmount();
@@ -48,7 +54,7 @@ library Errors {
     error OrderBook_OptionTokenTransferNotAllowed();
 
     /// @notice Thrown when the order is not settled
-    error OrderBook_OrderNotSettled();
+    error OrderBook_OrderMustBeSettled();
 
     /// @notice Thrown when the match order amount is incorrect
     error OrderBook_UnableToMatchOrder();
@@ -58,6 +64,18 @@ library Errors {
 
     /// @notice Thrown when collateral token is not valid
     error OrderBook_InvalidCollateralToken();
+
+    /// @notice Thrown when a non pending order is edited
+    error OrderBook_CannotCancelOrder();
+
+    /// @notice Thrown when a non pending order is canceled
+    error OrderBook_CanOnlyUpdatePendingOrder();
+
+    /// @notice Thrown when a non pending order is canceled
+    error OrderBook_OrderMustBePending();
+
+    /// @notice Thrown when a non-trader is trying to cancel an order
+    error OrderBook_CallerNotMaker();
 
     /*//////////////////////////////////////////////////////////////////////////
                               BLOCK HEADER ORACLE

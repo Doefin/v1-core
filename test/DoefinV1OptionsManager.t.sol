@@ -95,7 +95,7 @@ contract DoefinV1OptionsManager_Test is Base_Test {
     )
         public
     {
-        vm.assume(blockHeaderOracle != address(0));
+        vm.assume(blockHeaderOracle != address(0) && blockHeaderOracle != notBlockHeaderOracle);
         vm.assume(timestamp != 0);
 
         vm.startBroadcast(optionsManager.owner());

@@ -28,17 +28,16 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
                          USER-FACING NON-CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
     //@@inheritdoc IDoefinConfig
-    function addTokenToApprovedList(address token, uint256 minCollateralTokenAmount) external override onlyOwner {
+    function addTokenToApprovedList(address token, uint256 minCollateralAmount) external override onlyOwner {
         if (token == address(0)) {
             revert Errors.ZeroAddress();
         }
 
-        if (minCollateralTokenAmount == 0) {
+        if (minCollateralAmount == 0) {
             revert Errors.OrderBook_InvalidMinCollateralAmount(); //todo rename this error
         }
 
-        approvedTokens[token] =
-                        ApprovedToken({token: IERC20(token), minCollateralTokenAmount: minCollateralTokenAmount});
+        approvedTokens[token] = ApprovedToken({token: IERC20(token), minCollateralAmount: minCollateralAmount});
 
         emit AddTokenToApprovedList(token);
     }
