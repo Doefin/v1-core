@@ -598,6 +598,152 @@ contract DoefinV1OrderBook_Test is Base_Test {
         assertEq(orderBook.balanceOf(order.metadata.maker, 1), 0);
         assert(order.metadata.status == IDoefinV1OrderBook.Status.Canceled);
     }
+
+    function test__UpdateOrderD(uint256 strike, uint256 premium, uint256 expiry, address counterparty) public {
+        vm.assume(strike != 0);
+        vm.assume(expiry != 0);
+        vm.assume(counterparty != address(0));
+        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+
+        uint256 notional = premium + ((30 * premium) / 100);
+        address[] memory allowed = new address[](1);
+        allowed[0] = counterparty;
+
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
+
+        uint256 orderId = orderBook.createOrder(
+            strike,
+            premium,
+            notional,
+            expiry,
+            IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            IDoefinV1OrderBook.Position.Put,
+            collateralToken,
+            allowed
+        );
+
+        // Prepare update parameters
+        IDoefinV1OrderBook.UpdateOrder memory updateParams;
+        updateParams.notional = int256(notional / 10); // Increase notional by 10%
+        updateParams.premium = int256(premium / 20); // Increase premium by 5%
+        updateParams.position = IDoefinV1OrderBook.Position.Call;
+        updateParams.expiry = 10;
+        updateParams.expiryType = IDoefinV1OrderBook.ExpiryType.Timestamp;
+        address[] memory newAllowed = new address[](2);
+        newAllowed[0] = users.broker;
+        newAllowed[1] = users.james;
+        updateParams.allowed = newAllowed;
+        updateParams.strike = 100;
+
+        dai.approve(address(orderBook), uint256(updateParams.premium));
+
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.NotionalIncreased(orderId, uint256(updateParams.notional));
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.PremiumIncreased(orderId, uint256(updateParams.premium));
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderPositionUpdated(orderId, updateParams.position);
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderExpiryUpdated(orderId, updateParams.expiry, updateParams.expiryType);
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderAllowedListUpdated(orderId, updateParams.allowed);
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderStrikeUpdated(orderId, updateParams.strike);
+
+        orderBook.updateOrder(orderId, updateParams);
+
+        IDoefinV1OrderBook.BinaryOption memory updatedOrder = orderBook.getOrder(orderId);
+        assertEq(updatedOrder.premiums.notional, notional + uint256(updateParams.notional));
+        assertEq(updatedOrder.premiums.makerPremium, premium + uint256(updateParams.premium));
+        assertEq(uint8(updatedOrder.positions.makerPosition), uint8(updateParams.position));
+        assertEq(updatedOrder.metadata.expiry, updateParams.expiry);
+        assertEq(uint8(updatedOrder.metadata.expiryType), uint8(updateParams.expiryType));
+        assertEq(updatedOrder.metadata.allowed.length, updateParams.allowed.length);
+        assertEq(updatedOrder.metadata.allowed[0], updateParams.allowed[0]);
+        assertEq(updatedOrder.metadata.allowed[1], updateParams.allowed[1]);
+        assertEq(updatedOrder.metadata.initialStrike, updateParams.strike);
+
+        vm.stopBroadcast();
+
+        // Revert if caller is not maker
+        vm.startBroadcast(users.james);
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_CallerNotMaker.selector));
+        orderBook.updateOrder(orderId, updateParams);
+        vm.stopBroadcast();
+
+        // Revert if notional is invalid
+        updateParams.notional = - int256(notional); // This will make makerPremium >= notional
+        vm.startBroadcast(users.alice);
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_InvalidNotional.selector));
+        orderBook.updateOrder(orderId, updateParams);
+        vm.stopBroadcast();
+
+        // Revert if order is not pending
+        vm.startBroadcast(users.alice);
+        orderBook.cancelOrder(orderId);
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_OrderMustBePending.selector));
+        orderBook.updateOrder(orderId, updateParams);
+        vm.stopBroadcast();
+    }
+
+    function test__UpdateOrderDecreasePremiumAndNotional(
+        uint256 strike,
+        uint256 premium,
+        uint256 expiry,
+        address counterparty
+    )
+    public
+    {
+        vm.assume(strike != 0);
+        vm.assume(expiry != 0);
+        vm.assume(counterparty != address(0));
+        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+
+        uint256 notional = premium + ((30 * premium) / 100);
+        address[] memory allowed = new address[](1);
+        allowed[0] = counterparty;
+
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
+
+        uint256 orderId = orderBook.createOrder(
+            strike,
+            premium,
+            notional,
+            expiry,
+            IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            IDoefinV1OrderBook.Position.Put,
+            collateralToken,
+            allowed
+        );
+        vm.stopBroadcast();
+
+        // Prepare update parameters
+        IDoefinV1OrderBook.UpdateOrder memory updateParams;
+        updateParams.notional = - int256(notional / 10); // Decrease notional by 10%
+        updateParams.premium = - int256(premium / 20); // Decrease premium by 5%
+        updateParams.position = IDoefinV1OrderBook.Position.Call;
+        updateParams.expiry = 10;
+        updateParams.expiryType = IDoefinV1OrderBook.ExpiryType.Timestamp;
+        address[] memory newAllowed = new address[](2);
+        newAllowed[0] = users.broker;
+        newAllowed[1] = users.james;
+        updateParams.allowed = newAllowed;
+        updateParams.strike = 100;
+
+        vm.startBroadcast(users.alice);
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.NotionalDecreased(orderId, uint256(- updateParams.notional));
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.PremiumDecreased(orderId, uint256(- updateParams.premium));
+        orderBook.updateOrder(orderId, updateParams);
+
+        IDoefinV1OrderBook.BinaryOption memory updatedOrder = orderBook.getOrder(orderId);
+        assertEq(updatedOrder.premiums.notional, notional - uint256(- updateParams.notional));
+        assertEq(updatedOrder.premiums.makerPremium, premium - uint256(- updateParams.premium));
+        vm.stopBroadcast();
+    }
     /*//////////////////////////////////////////////////////////////
                   MATCH ORDER
     //////////////////////////////////////////////////////////////*/

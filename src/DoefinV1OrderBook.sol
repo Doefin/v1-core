@@ -367,6 +367,84 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         emit OrderStrikeUpdated(orderId, strike);
     }
 
+    /**
+     * @dev Update multiple aspects of an order
+     * @param orderId The order id of the order to update
+     * @param updateOrder A struct containing the update parameters
+     */
+    function updateOrder(uint256 orderId, UpdateOrder memory updateOrder) external {
+        BinaryOption storage order = orders[orderId];
+        if (msg.sender != order.metadata.maker) {
+            revert Errors.OrderBook_CallerNotMaker();
+        }
+
+        if (order.metadata.status != Status.Pending) {
+            revert Errors.OrderBook_OrderMustBePending();
+        }
+
+        //Update Notional
+        if (updateOrder.notional != 0) {
+            if (updateOrder.notional > 0) {
+                order.premiums.notional = order.premiums.notional + uint256(updateOrder.notional);
+                emit NotionalIncreased(orderId, uint256(updateOrder.notional));
+            } else {
+                uint256 notionalDecrease = uint256(- updateOrder.notional);
+                order.premiums.notional = order.premiums.notional - notionalDecrease;
+                emit NotionalDecreased(orderId, notionalDecrease);
+            }
+        }
+
+        // Update premium
+        if (updateOrder.premium != 0) {
+            if (updateOrder.premium > 0) {
+                uint256 premiumIncrease = uint256(updateOrder.premium);
+                uint256 newPremium = order.premiums.makerPremium + premiumIncrease;
+                if (newPremium >= order.premiums.notional) {
+                    revert Errors.OrderBook_InvalidNotional();
+                }
+                order.premiums.makerPremium = newPremium;
+                IERC20(order.metadata.collateralToken).transferFrom(msg.sender, address(this), premiumIncrease);
+                emit PremiumIncreased(orderId, premiumIncrease);
+            } else {
+                uint256 premiumDecrease = uint256(- updateOrder.premium);
+                uint256 newPremium = order.premiums.makerPremium - premiumDecrease;
+                if (newPremium < config.getApprovedToken(order.metadata.collateralToken).minCollateralAmount) {
+                    revert Errors.OrderBook_LessThanMinCollateralAmount();
+                }
+                order.premiums.makerPremium = newPremium;
+                IERC20(order.metadata.collateralToken).transfer(msg.sender, premiumDecrease);
+                emit PremiumDecreased(orderId, premiumDecrease);
+            }
+        }
+
+        if (order.premiums.makerPremium >= order.premiums.notional) {
+            revert Errors.OrderBook_InvalidNotional();
+        }
+
+        // Update position
+        if (updateOrder.position != order.positions.makerPosition) {
+            order.positions.makerPosition = updateOrder.position;
+            emit OrderPositionUpdated(orderId, updateOrder.position);
+        }
+
+        // Update expiry
+        if (updateOrder.expiry != 0) {
+            order.metadata.expiry = updateOrder.expiry;
+            order.metadata.expiryType = updateOrder.expiryType;
+            emit OrderExpiryUpdated(orderId, updateOrder.expiry, updateOrder.expiryType);
+        }
+
+        // Update allowed list
+        order.metadata.allowed = updateOrder.allowed;
+        emit OrderAllowedListUpdated(orderId, updateOrder.allowed);
+
+        // Update strike
+        if (updateOrder.strike != 0) {
+            order.metadata.initialStrike = updateOrder.strike;
+            emit OrderStrikeUpdated(orderId, updateOrder.strike);
+        }
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                 INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/

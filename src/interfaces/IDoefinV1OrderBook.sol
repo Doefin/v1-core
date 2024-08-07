@@ -90,6 +90,16 @@ interface IDoefinV1OrderBook {
         Metadata metadata;
     }
 
+    struct UpdateOrder {
+        int256 premium; // Positive for increase, negative for decrease
+        int256 notional; // Positive for increase, negative for decrease
+        Position position;
+        uint256 expiry;
+        ExpiryType expiryType;
+        address[] allowed;
+        uint256 strike;
+    }
+
     // Errors
 
     /// @notice Error thrown when an action is not allowed by the rules.
@@ -139,10 +149,15 @@ interface IDoefinV1OrderBook {
     /// @param id The unique identifier of the canceled option.
     event OrderCanceled(uint256 indexed id);
 
-    /// @notice Emitted when the premium of an option is updated.
-    /// @param id The unique identifier of the option whose premium is updated.
-    /// @param premium The new premium amount.
-    event PremiumUpdated(uint256 indexed id, uint256 premium);
+    /// @notice Emitted when the notional of an option is updated.
+    /// @param id The unique identifier of the option whose notional is updated.
+    /// @param notional The new notional amount.
+    event NotionalIncreased(uint256 indexed id, uint256 notional);
+
+    /// @notice Emitted when the notional of an option is updated.
+    /// @param id The unique identifier of the option whose notional is updated.
+    /// @param notional The new notional amount.
+    event NotionalDecreased(uint256 indexed id, uint256 notional);
 
     /// @notice Emitted when premium is increased
     /// @param id The order id
