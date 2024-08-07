@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import { Errors } from "./libraries/Errors.sol";
 import { BlockHeaderUtils } from "./libraries/BlockHeaderUtils.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
-import { DoefinV1OptionsManager } from "./DoefinV1OptionsManager.sol";
 import { IDoefinBlockHeaderOracle } from "./interfaces/IDoefinBlockHeaderOracle.sol";
 
 /**

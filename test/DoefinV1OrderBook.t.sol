@@ -3,30 +3,29 @@ pragma solidity >=0.8.19;
 
 import { IERC20, Base_Test } from "./Base.t.sol";
 import { Test } from "forge-std/Test.sol";
-import { Errors, DoefinV1OrderBook, IDoefinV1OrderBook } from "../src/DoefinV1OrderBook.sol";
-import { IDoefinOptionsManager, DoefinV1OptionsManager } from "../src/DoefinV1OptionsManager.sol";
+import {Errors, DoefinV1OrderBook, IDoefinV1OrderBook} from "../src/DoefinV1OrderBook.sol";
+import {DoefinV1BlockHeaderOracle} from "../src/DoefinV1BlockHeaderOracle.sol";
 
 /// @title DoefinV1OrderBook_Test
 contract DoefinV1OrderBook_Test is Base_Test {
     DoefinV1OrderBook public orderBook;
+    DoefinV1BlockHeaderOracle public blockHeaderOracle;
     address public collateralToken = address(dai);
     uint256 public constant minCollateralAmount = 100;
     uint256 public constant depositBound = 5000e6;
-    address public blockHeaderOracle;
-    address public optionsFeeAddress;
 
     function setUp() public virtual override {
         Base_Test.setUp();
         Base_Test.deployConfig();
 
         collateralToken = address(dai);
-        DoefinV1OptionsManager optionsManager =
-                    new DoefinV1OptionsManager(address(0), blockHeaderOracle, users.feeAddress);
-        orderBook = new DoefinV1OrderBook(address(config), address(optionsManager));
+        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886);
 
-        vm.startBroadcast(optionsManager.owner());
-        optionsManager.setOrderBookAddress(address(orderBook));
-        vm.stopBroadcast();
+        config.setFeeAddress(users.feeAddress);
+        config.setBlockHeaderOracle(address(blockHeaderOracle));
+        orderBook = new DoefinV1OrderBook(address(config));
+
+        config.setOrderBook(address(orderBook));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -698,7 +697,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(premium >= minCollateralAmount * 2 && premium <= depositBound);
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -721,8 +720,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         // Prepare update parameters
         IDoefinV1OrderBook.UpdateOrder memory updateParams;
-        updateParams.notional = - int256(notional / 10); // Decrease notional by 10%
-        updateParams.premium = - int256(premium / 20); // Decrease premium by 5%
+        updateParams.notional = - int256((10 * notional) / 100); // Decrease notional by 10%
+        updateParams.premium = - int256((20 * premium) / 100); // Decrease premium by 20%
         updateParams.position = IDoefinV1OrderBook.Position.Call;
         updateParams.expiry = 10;
         updateParams.expiryType = IDoefinV1OrderBook.ExpiryType.Timestamp;
@@ -1121,8 +1120,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.matchOrder(orderId);
         vm.stopBroadcast();
 
-        vm.startBroadcast(orderBook.optionsManager());
-        orderBook.settleOrder(orderId, blockNumber, timestamp, difficulty);
+        vm.startBroadcast(orderBook.blockHeaderOracle());
+        orderBook.settleOrder(blockNumber, timestamp, difficulty);
         vm.stopBroadcast();
 
         rewind(1);
@@ -1173,8 +1172,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.matchOrder(orderId);
         vm.stopBroadcast();
 
-        vm.startBroadcast(orderBook.optionsManager());
-        orderBook.settleOrder(orderId, blockNumber, timestamp, difficulty);
+        vm.startBroadcast(orderBook.blockHeaderOracle());
+        orderBook.settleOrder(blockNumber, timestamp, difficulty);
         vm.stopBroadcast();
 
         address winner;
@@ -1242,8 +1241,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.matchOrder(orderId);
         vm.stopBroadcast();
 
-        vm.startBroadcast(orderBook.optionsManager());
-        orderBook.settleOrder(orderId, blockNumber, timestamp, difficulty);
+        vm.startBroadcast(orderBook.blockHeaderOracle());
+        orderBook.settleOrder(blockNumber, timestamp, difficulty);
         vm.stopBroadcast();
 
         address winner;

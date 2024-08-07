@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import {Errors} from "./libraries/Errors.sol";
-import {IDoefinOptionsManager} from "./interfaces/IDoefinOptionsManager.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {IDoefinV1OrderBook} from "./interfaces/IDoefinV1OrderBook.sol";
@@ -15,8 +14,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     /// @notice The minimum collateral token amount required for an order to be valid
     uint256 public immutable minCollateralTokenAmount;
 
-    /// @notice The minimum strike token amount required for an order to be valid
-    address public immutable optionsManager;
+    /// @notice The block header oracle address
+    address public immutable blockHeaderOracle;
 
     /// @notice The address where premium fees are transferred to
     address public immutable optionsFeeAddress;
@@ -27,19 +26,27 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     /// @dev The mapping of id to option orders
     mapping(uint256 => BinaryOption) public orders;
 
+    /// @notice List of orderIds to be settled
+    uint256[] public registeredOrderIds;
+
     modifier onlyOptionsManager() {
-        require(msg.sender == optionsManager, "Can only be called by options manager");
+        require(msg.sender == blockHeaderOracle, "Can only be called by options manager");
         _;
     }
 
-    constructor(address _config, address _optionsManager) ERC1155("") {
-        if (_config == address(0) || _optionsManager == address(0)) {
+    modifier onlyBlockHeaderOracle() {
+        require(msg.sender == blockHeaderOracle, "Caller is not block header oracle");
+        _;
+    }
+
+    constructor(address _config) ERC1155("") {
+        if (_config == address(0)) {
             revert Errors.ZeroAddress();
         }
 
         config = IDoefinConfig(_config);
-        optionsManager = _optionsManager;
-        optionsFeeAddress = IDoefinOptionsManager(optionsManager).getOptionsFeeAddress();
+        blockHeaderOracle = config.getBlockHeaderOracle();
+        optionsFeeAddress = config.getFeeAddress();
     }
 
     //@@inheritdoc
@@ -179,31 +186,27 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     }
 
     //@@inheritdoc
-    function settleOrder(
-        uint256 orderId,
-        uint256 blockNumber,
-        uint256 timestamp,
-        uint256 difficulty
-    )
-        external
-        onlyOptionsManager
-        returns (bool)
-    {
-        BinaryOption storage order = orders[orderId];
-        if (order.metadata.status != Status.Matched) {
-            return false;
+    function settleOrder(uint256 blockNumber, uint256 timestamp, uint256 difficulty) public onlyBlockHeaderOracle {
+        uint256 len = registeredOrderIds.length;
+        for (uint256 i = 0; i < len; i++) {
+            BinaryOption storage order = orders[registeredOrderIds[i]];
+            if (order.metadata.status != Status.Matched) {
+                continue;
+            }
+
+            bool expiryIsValid = (
+                order.metadata.expiryType == ExpiryType.BlockNumber && blockNumber >= order.metadata.expiry
+            ) || (order.metadata.expiryType == ExpiryType.Timestamp && timestamp >= order.metadata.expiry);
+
+            if (expiryIsValid) {
+                order.metadata.status = Status.Settled;
+                order.metadata.finalStrike = difficulty;
+            }
+
+            registeredOrderIds[i] = registeredOrderIds[len - 1];
+            registeredOrderIds.pop();
+            len--;
         }
-
-        bool expiryIsValid = (
-            order.metadata.expiryType == ExpiryType.BlockNumber && blockNumber >= order.metadata.expiry
-        ) || (order.metadata.expiryType == ExpiryType.Timestamp && timestamp >= order.metadata.expiry);
-
-        if (order.metadata.taker != address(0) && expiryIsValid) {
-            order.metadata.status = Status.Settled;
-            order.metadata.finalStrike = difficulty;
-        }
-
-        return true;
     }
 
     //@@inheritdoc
@@ -472,7 +475,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
      * @param orderId The order id of the order to register
      */
     function _registerOrderForSettlement(uint256 orderId) internal {
-        IDoefinOptionsManager(optionsManager).registerOrderForSettlement(orderId);
+        registeredOrderIds.push(orderId);
+        emit OrderRegistered(orderId);
     }
 
     /**

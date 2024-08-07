@@ -129,11 +129,9 @@ interface IDoefinV1OrderBook {
     /// @param amount The amount the counter party submitted
     event OrderMatched(uint256 indexed id, address indexed counterparty, uint256 indexed amount);
 
-    /// @notice Emitted when an option is bought.
-    /// @param id The unique identifier of the option being bought.
-    /// @param amount The amount of the option bought.
-    /// @param buyer The address of the buyer.
-    event Bought(uint256 indexed id, uint256 amount, address indexed buyer);
+    /// @notice Emitted when a new order is registered.
+    /// @param id The unique identifier of the order.
+    event OrderRegistered(uint256 indexed id);
 
     /// @notice Emitted when an option is exercised.
     /// @param id The unique identifier of the option being exercised.
@@ -238,19 +236,11 @@ interface IDoefinV1OrderBook {
 
     /**
      * @dev Settle an order that has been registered for settlement in the options manager
-     * @param orderId The order id of the order to match
      * @param blockNumber The number at which an order can be settled
      * @param timestamp The timestamp of the block at which an order can be settled
      * @param difficulty The difficulty at the specified block number
      */
-    function settleOrder(
-        uint256 orderId,
-        uint256 blockNumber,
-        uint256 timestamp,
-        uint256 difficulty
-    )
-        external
-        returns (bool);
+    function settleOrder(uint256 blockNumber, uint256 timestamp, uint256 difficulty) external;
 
     /**
      * @dev Get Binary options order
