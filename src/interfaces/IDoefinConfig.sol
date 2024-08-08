@@ -8,7 +8,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 interface IDoefinConfig {
     struct ApprovedToken {
         IERC20 token;
-        uint256 minCollateralTokenAmount;
+        uint256 minCollateralAmount;
     }
 
     struct OrderBook {
@@ -28,6 +28,15 @@ interface IDoefinConfig {
     /// @notice Emitted when the token is removed from approved list
     event RemoveTokenFromApprovedList(address indexed token);
 
+    /// @notice Emitted when the order book address is set
+    event SetOrderBook(address indexed optionsManager);
+
+    /// @notice Emitted when the fee address is updated
+    event SetFeeAddress(address indexed feeAddress);
+
+    /// @notice Emitted when the block header address is updated
+    event SetBlockHeaderOracle(address indexed blockHeaderOracle);
+
     /*//////////////////////////////////////////////////////////////////////////
                                NON-CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
@@ -45,6 +54,19 @@ interface IDoefinConfig {
     /// @return true/false
     function tokenIsInApprovedList(address token) external returns (bool);
 
+    /// @notice Set the order book address
+    /// @param orderBook The order book address
+
+    function setOrderBook(address orderBook) external;
+
+    /// @notice Updates the options manager address
+    /// @param feeAddress The fee address of the options contract
+    function setFeeAddress(address feeAddress) external;
+
+    /// @notice Updates the block header oracle
+    /// @param newBlockHeaderOracle The new block header oracle address
+    function setBlockHeaderOracle(address newBlockHeaderOracle) external;
+
     /*//////////////////////////////////////////////////////////////////////////
                                  CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
@@ -52,4 +74,16 @@ interface IDoefinConfig {
     /// @param token The approved token
     /// @return ApprovedToken The ApprovedToken
     function getApprovedToken(address token) external view returns (ApprovedToken memory);
+
+    /// @notice Returns the address of the options manager
+    /// @return The options manager address
+    function getOptionsManager() external view returns (address);
+
+    /// @notice Returns the fee address of the options contract
+    /// @return The fee address
+    function getFeeAddress() external view returns (address);
+
+    /// @notice Returns the address of the block header oracle
+    /// @return The block header oracle address
+    function getBlockHeaderOracle() external view returns (address);
 }
