@@ -91,8 +91,8 @@ interface IDoefinV1OrderBook {
     }
 
     struct UpdateOrder {
-        int256 premium; // Positive for increase, negative for decrease
-        int256 notional; // Positive for increase, negative for decrease
+        uint256 premium;
+        uint256 notional;
         Position position;
         uint256 expiry;
         ExpiryType expiryType;

@@ -2,12 +2,14 @@
 pragma solidity ^0.8.0;
 
 import {Errors} from "./libraries/Errors.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import {IDoefinV1OrderBook} from "./interfaces/IDoefinV1OrderBook.sol";
 import {IDoefinConfig} from "./interfaces/IDoefinConfig.sol";
 
 contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
+    using SafeERC20 for IERC20;
+
     /// @notice Doefin Config
     IDoefinConfig public immutable config;
 
@@ -90,7 +92,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         newBinaryOption.positions = _initializePositions(position);
         newBinaryOption.metadata = _initializeMetadata(collateralToken, strike, notional, expiry, expiryType, allowed);
 
-        IERC20(collateralToken).transferFrom(msg.sender, address(this), premium);
+        IERC20(collateralToken).safeTransferFrom(msg.sender, address(this), premium);
         _mint(msg.sender, newOrderId, 1, "");
         orders[newOrderId] = newBinaryOption;
         orderIdCounter++;
@@ -134,13 +136,13 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         uint256 takerPremium = order.premiums.notional - order.premiums.makerPremium;
         order.premiums.takerPremium = takerPremium;
         uint256 balBefore = IERC20(order.metadata.collateralToken).balanceOf(address(this));
-        IERC20(order.metadata.collateralToken).transferFrom(msg.sender, address(this), takerPremium);
+        IERC20(order.metadata.collateralToken).safeTransferFrom(msg.sender, address(this), takerPremium);
         if (IERC20(order.metadata.collateralToken).balanceOf(address(this)) - balBefore != takerPremium) {
             revert Errors.OrderBook_UnableToMatchOrder();
         }
 
         uint256 fee = order.premiums.notional - order.metadata.payOut;
-        IERC20(order.metadata.collateralToken).transfer(optionsFeeAddress, fee);
+        IERC20(order.metadata.collateralToken).safeTransfer(optionsFeeAddress, fee);
 
         _mint(msg.sender, orderId, 1, "");
         _registerOrderForSettlement(orderId);
@@ -166,18 +168,18 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         if (order.metadata.finalStrike > order.metadata.initialStrike) {
             if (order.positions.makerPosition == Position.Call) {
                 winner = order.metadata.maker;
-                IERC20(order.metadata.collateralToken).transfer(order.metadata.maker, order.metadata.payOut);
+                IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.metadata.payOut);
             } else {
                 winner = order.metadata.taker;
-                IERC20(order.metadata.collateralToken).transfer(order.metadata.taker, order.metadata.payOut);
+                IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.taker, order.metadata.payOut);
             }
         } else if (order.metadata.finalStrike < order.metadata.initialStrike) {
             if (order.positions.makerPosition == Position.Put) {
                 winner = order.metadata.maker;
-                IERC20(order.metadata.collateralToken).transfer(order.metadata.maker, order.metadata.payOut);
+                IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.metadata.payOut);
             } else {
                 winner = order.metadata.taker;
-                IERC20(order.metadata.collateralToken).transfer(order.metadata.taker, order.metadata.payOut);
+                IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.taker, order.metadata.payOut);
             }
         }
 
@@ -201,11 +203,11 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
             if (expiryIsValid) {
                 order.metadata.status = Status.Settled;
                 order.metadata.finalStrike = difficulty;
-            }
 
-            registeredOrderIds[i] = registeredOrderIds[len - 1];
-            registeredOrderIds.pop();
-            len--;
+                registeredOrderIds[i] = registeredOrderIds[len - 1];
+                registeredOrderIds.pop();
+                len--;
+            }
         }
     }
 
@@ -222,7 +224,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
 
         order.metadata.status = Status.Canceled;
         _burn(order.metadata.maker, orderId, 1);
-        IERC20(order.metadata.collateralToken).transfer(order.metadata.maker, order.premiums.makerPremium);
+        IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.premiums.makerPremium);
         emit OrderCanceled(orderId);
     }
 
@@ -232,144 +234,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     }
 
     /*//////////////////////////////////////////////////////////////////////////
-                                UPDATE ORDER FUNCTIONS
+                                UPDATE ORDER FUNCTION
     //////////////////////////////////////////////////////////////////////////*/
-    /**
-     * @dev Increase the premium of the order
-     * @param orderId The order id of the order to update
-     * @param premium The additional premium to add
-     */
-    function increasePremium(uint256 orderId, uint256 premium) external {
-        BinaryOption storage order = orders[orderId];
-        if (msg.sender != order.metadata.maker) {
-            revert Errors.OrderBook_CallerNotMaker();
-        }
-
-        if (order.metadata.status != Status.Pending) {
-            revert Errors.OrderBook_OrderMustBePending();
-        }
-
-        uint256 newPremium = order.premiums.makerPremium + premium;
-        if (newPremium >= order.premiums.notional) {
-            revert Errors.OrderBook_InvalidNotional();
-        }
-
-        order.premiums.makerPremium = newPremium;
-        IERC20(order.metadata.collateralToken).transferFrom(msg.sender, address(this), premium);
-        emit PremiumIncreased(orderId, premium);
-    }
-
-    /**
-     * @dev Decrease the premium of the order
-     * @param orderId The order id of the order to update
-     * @param premium The additional premium to deduct
-     */
-    function decreasePremium(uint256 orderId, uint256 premium) external {
-        BinaryOption storage order = orders[orderId];
-        if (msg.sender != order.metadata.maker) {
-            revert Errors.OrderBook_CallerNotMaker();
-        }
-
-        if (order.metadata.status != Status.Pending) {
-            revert Errors.OrderBook_OrderMustBePending();
-        }
-
-        uint256 newPremium = order.premiums.makerPremium - premium;
-        if (newPremium < config.getApprovedToken(order.metadata.collateralToken).minCollateralAmount) {
-            revert Errors.OrderBook_LessThanMinCollateralAmount();
-        }
-
-        order.premiums.makerPremium = newPremium;
-        IERC20(order.metadata.collateralToken).transfer(msg.sender, premium);
-        emit PremiumDecreased(orderId, premium);
-    }
-
-    /**
-     * @dev Update the position of the order
-     * @param orderId The order id of the order to update
-     * @param position The updated position of the order to update
-     */
-    function updateOrderPosition(uint256 orderId, Position position) external {
-        BinaryOption storage order = orders[orderId];
-        if (msg.sender != order.metadata.maker) {
-            revert Errors.OrderBook_CallerNotMaker();
-        }
-
-        if (order.metadata.status != Status.Pending) {
-            revert Errors.OrderBook_OrderMustBePending();
-        }
-
-        order.positions.makerPosition = position;
-        emit OrderPositionUpdated(orderId, position);
-    }
-
-    /**
-     * @dev Update the expiry of the order
-     * @param orderId The order id of the order to update
-     * @param expiry The updated expiry of the order to update
-     * @param expiryType The updated expiry type of the order to update
-     */
-    function updateOrderExpiry(uint256 orderId, uint256 expiry, ExpiryType expiryType) external {
-        BinaryOption storage order = orders[orderId];
-        if (msg.sender != order.metadata.maker) {
-            revert Errors.OrderBook_CallerNotMaker();
-        }
-
-        if (order.metadata.status != Status.Pending) {
-            revert Errors.OrderBook_OrderMustBePending();
-        }
-
-        if (expiry == 0) {
-            revert Errors.OrderBook_ZeroExpiry();
-        }
-
-        order.metadata.expiry = expiry;
-        order.metadata.expiryType = expiryType;
-        emit OrderExpiryUpdated(orderId, expiry, expiryType);
-    }
-
-    /**
-     * @dev Update the allowed list of the order
-     * @param orderId The order id of the order to update
-     * @param allowed The updated allowed list of the order to update
-     */
-    function updateOrderAllowedList(uint256 orderId, address[] calldata allowed) external {
-        BinaryOption storage order = orders[orderId];
-        if (msg.sender != order.metadata.maker) {
-            revert Errors.OrderBook_CallerNotMaker();
-        }
-
-        if (order.metadata.status != Status.Pending) {
-            revert Errors.OrderBook_OrderMustBePending();
-        }
-
-        order.metadata.allowed = allowed;
-        emit OrderAllowedListUpdated(orderId, allowed);
-    }
-
-    /**
-     * @dev Update the strike of the order
-     * @param orderId The order id of the order to update
-     * @param strike The new strike id of the order to update
-     */
-    function updateOrderStrike(uint256 orderId, uint256 strike) external {
-        BinaryOption storage order = orders[orderId];
-        if (msg.sender != order.metadata.maker) {
-            revert Errors.OrderBook_CallerNotMaker();
-        }
-
-        if (order.metadata.status != Status.Pending) {
-            revert Errors.OrderBook_OrderMustBePending();
-        }
-
-        if (strike == 0) {
-            revert Errors.OrderBook_ZeroStrike();
-        }
-
-        order.metadata.initialStrike = strike;
-        emit OrderStrikeUpdated(orderId, strike);
-    }
-
     /**
      * @dev Update multiple aspects of an order
      * @param orderId The order id of the order to update
@@ -387,36 +253,31 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
 
         //Update Notional
         if (updateOrder.notional != 0) {
-            if (updateOrder.notional > 0) {
-                order.premiums.notional = order.premiums.notional + uint256(updateOrder.notional);
-                emit NotionalIncreased(orderId, uint256(updateOrder.notional));
+            uint256 prevNotional = order.premiums.notional;
+            order.premiums.notional = updateOrder.notional;
+
+            if (updateOrder.notional > prevNotional) {
+                emit NotionalIncreased(orderId, updateOrder.notional);
             } else {
-                uint256 notionalDecrease = uint256(- updateOrder.notional);
-                order.premiums.notional = order.premiums.notional - notionalDecrease;
-                emit NotionalDecreased(orderId, notionalDecrease);
+                emit NotionalDecreased(orderId, updateOrder.notional);
             }
         }
 
         // Update premium
         if (updateOrder.premium != 0) {
-            if (updateOrder.premium > 0) {
-                uint256 premiumIncrease = uint256(updateOrder.premium);
-                uint256 newPremium = order.premiums.makerPremium + premiumIncrease;
-                if (newPremium >= order.premiums.notional) {
-                    revert Errors.OrderBook_InvalidNotional();
-                }
-                order.premiums.makerPremium = newPremium;
-                IERC20(order.metadata.collateralToken).transferFrom(msg.sender, address(this), premiumIncrease);
-                emit PremiumIncreased(orderId, premiumIncrease);
+            if (updateOrder.premium >= order.premiums.makerPremium) {
+                uint256 premiumIncrease = updateOrder.premium - order.premiums.makerPremium;
+                order.premiums.makerPremium = updateOrder.premium;
+                IERC20(order.metadata.collateralToken).safeTransferFrom(msg.sender, address(this), premiumIncrease);
+                emit PremiumIncreased(orderId, updateOrder.premium);
             } else {
-                uint256 premiumDecrease = uint256(- updateOrder.premium);
-                uint256 newPremium = order.premiums.makerPremium - premiumDecrease;
-                if (newPremium < config.getApprovedToken(order.metadata.collateralToken).minCollateralAmount) {
+                uint256 premiumDecrease = order.premiums.makerPremium - updateOrder.premium;
+                if (premiumDecrease < config.getApprovedToken(order.metadata.collateralToken).minCollateralAmount) {
                     revert Errors.OrderBook_LessThanMinCollateralAmount();
                 }
-                order.premiums.makerPremium = newPremium;
-                IERC20(order.metadata.collateralToken).transfer(msg.sender, premiumDecrease);
-                emit PremiumDecreased(orderId, premiumDecrease);
+                order.premiums.makerPremium = updateOrder.premium;
+                IERC20(order.metadata.collateralToken).safeTransfer(msg.sender, premiumDecrease);
+                emit PremiumDecreased(orderId, updateOrder.premium);
             }
         }
 
