@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {Errors} from "./libraries/Errors.sol";
 import {IERC20, SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC1155} from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import {ERC1155} from "solady/contracts/tokens/ERC1155.sol";
 import {IDoefinV1OrderBook} from "./interfaces/IDoefinV1OrderBook.sol";
 import {IDoefinConfig} from "./interfaces/IDoefinConfig.sol";
 
@@ -41,7 +41,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         _;
     }
 
-    constructor(address _config) ERC1155("") {
+    constructor(address _config) ERC1155() {
         if (_config == address(0)) {
             revert Errors.ZeroAddress();
         }
@@ -309,12 +309,19 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         }
     }
 
+    function uri(uint256 id) public view override returns (string memory) {
+        return "";
+    }
     /*//////////////////////////////////////////////////////////////////////////
                                 INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
+
+    function _useBeforeTokenTransfer() internal view override returns (bool) {
+        return true;
+    }
+
     //@inheritdoc
     function _beforeTokenTransfer(
-        address operator,
         address from,
         address to,
         uint256[] memory ids,

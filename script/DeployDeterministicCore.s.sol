@@ -9,29 +9,37 @@ import {IDoefinBlockHeaderOracle} from "../src/interfaces/IDoefinBlockHeaderOrac
 
 /// @notice Deploys all V1 Core contracts at deterministic addresses across chains:
 /// 1. {DoefinV1Config}
-///
+/// 2. {DoefinV1OrderBook}
+/// 3. {DoefinV1BlockHeaderOracle}
 /// @dev Reverts if any contract has already been deployed.
 contract DeployDeterministicCore is BaseScript {
     address public feeAddress;
     uint256 public initialBlockHeight;
 
-    function run() public virtual broadcast returns (DoefinV1Config config) {
+    function run()
+    public
+    virtual
+    returns (DoefinV1Config config, DoefinV1BlockHeaderOracle blockHeaderOracle, DoefinV1OrderBook orderBook)
+    {
+        //        bytes32 salt = constructCreate2Salt();
+        //        config = new DoefinV1Config{salt: salt}();//for deterministic deployment
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+
         vm.startBroadcast(deployerPrivateKey);
 
         feeAddress = 0x94c5D1D0E682ebEfcfFfeF1645f40947E572e54a;
         initialBlockHeight = 838_886;
 
-        bytes32 salt = constructCreate2Salt();
-        config = new DoefinV1Config{salt: salt}();
-        DoefinV1BlockHeaderOracle blockHeaderOracle =
-                    new DoefinV1BlockHeaderOracle{salt: salt}(setupInitialBlocks(), initialBlockHeight);
+        config = new DoefinV1Config();
+
+        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), initialBlockHeight);
 
         config.setFeeAddress(feeAddress);
         config.setBlockHeaderOracle(address(blockHeaderOracle));
-        DoefinV1OrderBook orderBook = new DoefinV1OrderBook{salt: salt}(address(config));
 
+        orderBook = new DoefinV1OrderBook(address(config));
         config.setOrderBook(address(orderBook));
+
         vm.stopBroadcast();
     }
 

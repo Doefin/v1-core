@@ -114,9 +114,6 @@ interface IDoefinV1OrderBook {
     /// @notice Error thrown when an invalid amount is used, such as zero or exceeding limits.
     error AmountForbidden();
 
-    /// @notice Error thrown when the caller has insufficient balance to perform the action.
-    error InsufficientBalance();
-
     // Events
 
     /// @notice Emitted when a new option is created.
