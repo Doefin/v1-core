@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19;
 
-import {Errors} from "./libraries/Errors.sol";
-import {IDoefinConfig} from "./interfaces/IDoefinConfig.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Errors } from "./libraries/Errors.sol";
+import { IDoefinConfig } from "./interfaces/IDoefinConfig.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /// @title DoefinV1Config
 /// @notice See the documentation in {DoefinV1Config}.
@@ -23,7 +23,7 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @dev Initializes the factor and it's owner contract
-    constructor() Ownable() {}
+    constructor() Ownable() { }
 
     /*//////////////////////////////////////////////////////////////////////////
                          USER-FACING NON-CONSTANT FUNCTIONS
@@ -38,7 +38,7 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
             revert Errors.OrderBook_InvalidMinCollateralAmount();
         }
 
-        approvedTokens[token] = ApprovedToken({token: IERC20(token), minCollateralAmount: minCollateralAmount});
+        approvedTokens[token] = ApprovedToken({ token: IERC20(token), minCollateralAmount: minCollateralAmount });
 
         emit AddTokenToApprovedList(token);
     }

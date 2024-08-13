@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19 <0.9.0;
 
-import {Users} from "./utils/Types.sol";
-import {Constants} from "./utils/Constants.sol";
-import {Assertions} from "./utils/Assertions.sol";
-import {DoefinV1Config, IDoefinConfig} from "../src/DoefinV1Config.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Test} from "forge-std/Test.sol";
+import { Users } from "./utils/Types.sol";
+import { Constants } from "./utils/Constants.sol";
+import { Assertions } from "./utils/Assertions.sol";
+import { DoefinV1Config, IDoefinConfig } from "../src/DoefinV1Config.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import { Test } from "forge-std/Test.sol";
 
 /// @notice Base test contract with common logic needed by all tests.
 abstract contract Base_Test is Test, Assertions, Constants {
@@ -56,9 +56,9 @@ abstract contract Base_Test is Test, Assertions, Constants {
     /// @dev Generates a user, labels its address, and funds it with test assets.
     function createUser(string memory name) internal returns (address payable) {
         address payable user = payable(makeAddr(name));
-        vm.deal({account: user, newBalance: 100 ether});
-        deal({token: address(dai), to: user, give: 1_000_000e18});
-        deal({token: address(usdt), to: user, give: 1_000_000e18});
+        vm.deal({ account: user, newBalance: 100 ether });
+        deal({ token: address(dai), to: user, give: 1_000_000e18 });
+        deal({ token: address(usdt), to: user, give: 1_000_000e18 });
         return user;
     }
 
@@ -67,7 +67,7 @@ abstract contract Base_Test is Test, Assertions, Constants {
         config = new DoefinV1Config();
         config.addTokenToApprovedList(address(dai), 100);
         config.addTokenToApprovedList(address(usdt), 100);
-        vm.label({account: address(config), newLabel: "DoefinV1Config"});
+        vm.label({ account: address(config), newLabel: "DoefinV1Config" });
     }
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -76,7 +76,7 @@ abstract contract Base_Test is Test, Assertions, Constants {
 
     /// @dev Expects a call to {IERC20.transfer}.
     function expectCallToTransfer(address to, uint256 amount) internal {
-        vm.expectCall({callee: address(dai), data: abi.encodeCall(IERC20.transfer, (to, amount))});
+        vm.expectCall({ callee: address(dai), data: abi.encodeCall(IERC20.transfer, (to, amount)) });
     }
 
     /// @dev Expects a call to {IERC20.transfer}.

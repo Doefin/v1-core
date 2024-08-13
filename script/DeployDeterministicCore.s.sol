@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19 <0.9.0;
 
-import {BaseScript} from "./Base.s.sol";
-import {DoefinV1Config} from "../src/DoefinV1Config.sol";
-import {DoefinV1OrderBook} from "../src/DoefinV1OrderBook.sol";
-import {DoefinV1BlockHeaderOracle} from "../src/DoefinV1BlockHeaderOracle.sol";
-import {IDoefinBlockHeaderOracle} from "../src/interfaces/IDoefinBlockHeaderOracle.sol";
+import { BaseScript } from "./Base.s.sol";
+import { DoefinV1Config } from "../src/DoefinV1Config.sol";
+import { DoefinV1OrderBook } from "../src/DoefinV1OrderBook.sol";
+import { DoefinV1BlockHeaderOracle } from "../src/DoefinV1BlockHeaderOracle.sol";
+import { IDoefinBlockHeaderOracle } from "../src/interfaces/IDoefinBlockHeaderOracle.sol";
 
 /// @notice Deploys all V1 Core contracts at deterministic addresses across chains:
 /// 1. {DoefinV1Config}
@@ -17,9 +17,9 @@ contract DeployDeterministicCore is BaseScript {
     uint256 public initialBlockHeight;
 
     function run()
-    public
-    virtual
-    returns (DoefinV1Config config, DoefinV1BlockHeaderOracle blockHeaderOracle, DoefinV1OrderBook orderBook)
+        public
+        virtual
+        returns (DoefinV1Config config, DoefinV1BlockHeaderOracle blockHeaderOracle, DoefinV1OrderBook orderBook)
     {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 

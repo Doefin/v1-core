@@ -209,8 +209,8 @@ interface IDoefinV1OrderBook {
         address collateralToken,
         address[] calldata allowed
     )
-    external
-    returns (uint256);
+        external
+        returns (uint256);
 
     /**
      * @dev Match a given order by a maker
