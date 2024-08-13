@@ -21,8 +21,6 @@ contract DeployDeterministicCore is BaseScript {
     virtual
     returns (DoefinV1Config config, DoefinV1BlockHeaderOracle blockHeaderOracle, DoefinV1OrderBook orderBook)
     {
-        //        bytes32 salt = constructCreate2Salt();
-        //        config = new DoefinV1Config{salt: salt}();//for deterministic deployment
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
         vm.startBroadcast(deployerPrivateKey);

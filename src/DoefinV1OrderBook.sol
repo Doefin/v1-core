@@ -316,7 +316,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
                                 INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
 
-    function _useBeforeTokenTransfer() internal view override returns (bool) {
+    function _useBeforeTokenTransfer() internal pure override returns (bool) {
         return true;
     }
 
