@@ -114,9 +114,6 @@ interface IDoefinV1OrderBook {
     /// @notice Error thrown when an invalid amount is used, such as zero or exceeding limits.
     error AmountForbidden();
 
-    /// @notice Error thrown when the caller has insufficient balance to perform the action.
-    error InsufficientBalance();
-
     // Events
 
     /// @notice Emitted when a new option is created.
@@ -212,8 +209,8 @@ interface IDoefinV1OrderBook {
         address collateralToken,
         address[] calldata allowed
     )
-    external
-    returns (uint256);
+        external
+        returns (uint256);
 
     /**
      * @dev Match a given order by a maker

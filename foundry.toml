@@ -18,7 +18,8 @@
   remappings = [
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
     "@prb/math/=lib/prb-math/",
-    "forge-std/=lib/forge-std/src"
+    "forge-std/=lib/forge-std/src",
+    "solady/contracts/=lib/solady/src/"
   ]
 
 [profile.default.fuzz]

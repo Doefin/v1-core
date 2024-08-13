@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19;
 
-import {Base_Test} from "./Base.t.sol";
-import {Test} from "forge-std/Test.sol";
-import {IDoefinConfig} from "../src/interfaces/IDoefinConfig.sol";
+import { Base_Test } from "./Base.t.sol";
+import { Test } from "forge-std/Test.sol";
+import { IDoefinConfig } from "../src/interfaces/IDoefinConfig.sol";
 
 /// @title DoefinV1Config_Test
 contract DoefinV1Config_Test is Base_Test {
