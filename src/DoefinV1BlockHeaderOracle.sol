@@ -2,8 +2,10 @@
 pragma solidity ^0.8.0;
 
 import { Errors } from "./libraries/Errors.sol";
+import { IDoefinConfig } from "./interfaces/IDoefinConfig.sol";
 import { BlockHeaderUtils } from "./libraries/BlockHeaderUtils.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import { IDoefinV1OrderBook } from "./interfaces/IDoefinV1OrderBook.sol";
 import { IDoefinBlockHeaderOracle } from "./interfaces/IDoefinBlockHeaderOracle.sol";
 
 /**
@@ -31,6 +33,9 @@ import { IDoefinBlockHeaderOracle } from "./interfaces/IDoefinBlockHeaderOracle.
  * settlement
  */
 contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
+    /// @notice Doefin Config
+    IDoefinConfig public immutable config;
+
     // @notice Store the block number separately since the block number is not part of the block header information.
     uint256 public currentBlockHeight;
 
@@ -48,7 +53,8 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
 
     constructor(
         IDoefinBlockHeaderOracle.BlockHeader[NUM_OF_BLOCK_HEADERS] memory initialBlockHistory,
-        uint256 initialBlockHeight
+        uint256 initialBlockHeight,
+        address _config
     ) {
         for (uint256 i = 0; i < NUM_OF_BLOCK_HEADERS; ++i) {
             blockHeaders[i] = initialBlockHistory[i];
@@ -56,6 +62,7 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
 
         nextBlockIndex = 0;
         currentBlockHeight = initialBlockHeight;
+        config = IDoefinConfig(_config);
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
@@ -77,6 +84,10 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
         nextBlockIndex = (nextBlockIndex + 1) % NUM_OF_BLOCK_HEADERS;
         ++currentBlockHeight;
 
+        _settleOrder(
+            currentBlockHeight, newBlockHeader.timestamp, BlockHeaderUtils.calculateDifficultyTarget(newBlockHeader)
+        );
+
         emit BlockSubmitted(newBlockHeader.merkleRootHash, newBlockHeader.timestamp);
     }
 
@@ -96,5 +107,19 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
     function getLatestBlockHeader() public view returns (BlockHeader memory) {
         uint256 currentBlockIndex = ((nextBlockIndex + NUM_OF_BLOCK_HEADERS) - 1) % NUM_OF_BLOCK_HEADERS;
         return blockHeaders[currentBlockIndex];
+    }
+
+    /**
+     * @dev Settle orders in the order book for every new bloc number
+     * @param blockNumber The latest block number to be submitted
+     * @param timestamp The timestamp of the new bloc header
+     * @param difficulty The difficulty of the
+     */
+    function _settleOrder(uint256 blockNumber, uint256 timestamp, uint256 difficulty) internal {
+        address orderBook = config.getOrderBook();
+        if (orderBook == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+        IDoefinV1OrderBook(orderBook).settleOrder(blockNumber, timestamp, difficulty);
     }
 }

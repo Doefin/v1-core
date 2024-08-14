@@ -10,7 +10,7 @@ import { DoefinV1BlockHeaderOracle } from "../src/DoefinV1BlockHeaderOracle.sol"
 contract DoefinV1OrderBook_Test is Base_Test {
     DoefinV1OrderBook public orderBook;
     DoefinV1BlockHeaderOracle public blockHeaderOracle;
-    address public collateralToken = address(dai);
+    address public collateralToken;
     uint256 public constant minCollateralAmount = 100;
     uint256 public constant depositBound = 5000e6;
 
@@ -19,7 +19,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         Base_Test.deployConfig();
 
         collateralToken = address(dai);
-        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886);
+        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886, address(config));
 
         config.setFeeAddress(users.feeAddress);
         config.setBlockHeaderOracle(address(blockHeaderOracle));

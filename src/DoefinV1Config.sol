@@ -101,11 +101,6 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     }
 
     //@@inheritdoc IDoefinConfig
-    function getOptionsManager() public view returns (address) {
-        return orderBook;
-    }
-
-    //@@inheritdoc IDoefinConfig
     function getFeeAddress() public view returns (address) {
         return feeAddress;
     }
@@ -113,5 +108,10 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     //@@inheritdoc IDoefinConfig
     function getBlockHeaderOracle() public view returns (address) {
         return blockHeaderOracle;
+    }
+
+    //@@inheritdoc IDoefinConfig
+    function getOrderBook() external view returns (address) {
+        return orderBook;
     }
 }

@@ -30,7 +30,7 @@ contract DeployDeterministicCore is BaseScript {
 
         config = new DoefinV1Config();
 
-        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), initialBlockHeight);
+        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), initialBlockHeight, address(config));
 
         config.setFeeAddress(feeAddress);
         config.setBlockHeaderOracle(address(blockHeaderOracle));

@@ -75,10 +75,6 @@ interface IDoefinConfig {
     /// @return ApprovedToken The ApprovedToken
     function getApprovedToken(address token) external view returns (ApprovedToken memory);
 
-    /// @notice Returns the address of the options manager
-    /// @return The options manager address
-    function getOptionsManager() external view returns (address);
-
     /// @notice Returns the fee address of the options contract
     /// @return The fee address
     function getFeeAddress() external view returns (address);
@@ -86,4 +82,8 @@ interface IDoefinConfig {
     /// @notice Returns the address of the block header oracle
     /// @return The block header oracle address
     function getBlockHeaderOracle() external view returns (address);
+
+    /// @notice Returns the address of the order book contract
+    /// @return The order book contract address
+    function getOrderBook() external view returns (address);
 }
