@@ -14,4 +14,6 @@ struct Users {
     address payable broker;
     // User Fee Address
     address payable feeAddress;
+    // Relayer Address
+    address payable relayer;
 }

@@ -2,12 +2,13 @@
 pragma solidity ^0.8.0;
 
 import { Errors } from "./libraries/Errors.sol";
-import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ERC1155 } from "solady/contracts/tokens/ERC1155.sol";
+import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IDoefinV1OrderBook } from "./interfaces/IDoefinV1OrderBook.sol";
 import { IDoefinConfig } from "./interfaces/IDoefinConfig.sol";
 
-contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
+contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
     using SafeERC20 for IERC20;
 
     /// @notice Doefin Config
@@ -18,6 +19,9 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
 
     /// @notice The block header oracle address
     address public immutable blockHeaderOracle;
+
+    /// @notice The address of the relayer
+    address public immutable authorizedRelayer;
 
     /// @notice The address where premium fees are transferred to
     address public immutable optionsFeeAddress;
@@ -32,16 +36,21 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     uint256[] public registeredOrderIds;
 
     modifier onlyOptionsManager() {
-        require(msg.sender == blockHeaderOracle, "Can only be called by options manager");
+        require(_msgSender() == blockHeaderOracle, "Can only be called by options manager");
         _;
     }
 
     modifier onlyBlockHeaderOracle() {
-        require(msg.sender == blockHeaderOracle, "Caller is not block header oracle");
+        require(_msgSender() == blockHeaderOracle, "Caller is not block header oracle");
         _;
     }
 
-    constructor(address _config) ERC1155() {
+    modifier onlyAuthorizedRelayer() {
+        require(authorizedRelayer == msg.sender, "Caller is not an authorized relayer");
+        _;
+    }
+
+    constructor(address _config) ERC1155() ERC2771Context(IDoefinConfig(_config).getTrustedForwarder()) {
         if (_config == address(0)) {
             revert Errors.ZeroAddress();
         }
@@ -49,6 +58,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         config = IDoefinConfig(_config);
         blockHeaderOracle = config.getBlockHeaderOracle();
         optionsFeeAddress = config.getFeeAddress();
+        authorizedRelayer = config.getAuthorizedRelayer();
     }
 
     //@@inheritdoc
@@ -92,8 +102,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         newBinaryOption.positions = _initializePositions(position);
         newBinaryOption.metadata = _initializeMetadata(collateralToken, strike, notional, expiry, expiryType, allowed);
 
-        IERC20(collateralToken).safeTransferFrom(msg.sender, address(this), premium);
-        _mint(msg.sender, newOrderId, 1, "");
+        IERC20(collateralToken).safeTransferFrom(_msgSender(), address(this), premium);
+        _mint(_msgSender(), newOrderId, 1, "");
         orders[newOrderId] = newBinaryOption;
         orderIdCounter++;
 
@@ -120,7 +130,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         if (allowed.length > 0) {
             bool isAllowed = false;
             for (uint256 i = 0; i < allowed.length; i++) {
-                if (allowed[i] == msg.sender) {
+                if (allowed[i] == _msgSender()) {
                     isAllowed = true;
                     break;
                 }
@@ -131,12 +141,12 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
             }
         }
 
-        order.metadata.taker = msg.sender;
+        order.metadata.taker = _msgSender();
         order.metadata.status = Status.Matched;
         uint256 takerPremium = order.premiums.notional - order.premiums.makerPremium;
         order.premiums.takerPremium = takerPremium;
         uint256 balBefore = IERC20(order.metadata.collateralToken).balanceOf(address(this));
-        IERC20(order.metadata.collateralToken).safeTransferFrom(msg.sender, address(this), takerPremium);
+        IERC20(order.metadata.collateralToken).safeTransferFrom(_msgSender(), address(this), takerPremium);
         if (IERC20(order.metadata.collateralToken).balanceOf(address(this)) - balBefore != takerPremium) {
             revert Errors.OrderBook_UnableToMatchOrder();
         }
@@ -144,9 +154,64 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
         uint256 fee = order.premiums.notional - order.metadata.payOut;
         IERC20(order.metadata.collateralToken).safeTransfer(optionsFeeAddress, fee);
 
-        _mint(msg.sender, orderId, 1, "");
+        _mint(_msgSender(), orderId, 1, "");
         _registerOrderForSettlement(orderId);
-        emit OrderMatched(orderId, msg.sender, takerPremium);
+        emit OrderMatched(orderId, _msgSender(), takerPremium);
+    }
+
+    function createAndMatchOrder(MatchedOrder calldata order) external onlyAuthorizedRelayer returns (uint256) {
+        if (order.strike == 0) {
+            revert Errors.OrderBook_ZeroStrike();
+        }
+
+        if (order.collateralToken == address(0) || !config.tokenIsInApprovedList(order.collateralToken)) {
+            revert Errors.OrderBook_InvalidCollateralToken();
+        }
+
+        if (order.premium < config.getApprovedToken(order.collateralToken).minCollateralAmount) {
+            revert Errors.OrderBook_InvalidMinCollateralAmount();
+        }
+
+        if (order.expiry == 0) {
+            revert Errors.OrderBook_ZeroExpiry();
+        }
+
+        if (order.notional <= order.premium) {
+            revert Errors.OrderBook_InvalidNotional();
+        }
+
+        // Create the order
+        uint256 newOrderId = orderIdCounter++;
+        BinaryOption storage newBinaryOption = orders[newOrderId];
+        newBinaryOption.premiums = _initializePremiums(order.premium, order.notional);
+        newBinaryOption.positions = _initializePositions(Position(order.position));
+        newBinaryOption.metadata = _initializeMetadata(
+            order.collateralToken,
+            order.strike,
+            order.notional,
+            order.expiry,
+            ExpiryType(order.expiryType),
+            order.allowed
+        );
+        newBinaryOption.metadata.status = Status.Matched;
+        newBinaryOption.metadata.taker = order.taker;
+        uint256 takerPremium = order.notional - order.premium;
+        newBinaryOption.premiums.takerPremium = takerPremium;
+
+        IERC20(order.collateralToken).safeTransferFrom(order.maker, address(this), order.premium);
+        IERC20(order.collateralToken).safeTransferFrom(order.taker, address(this), takerPremium);
+
+        uint256 fee = order.notional - newBinaryOption.metadata.payOut;
+        IERC20(order.collateralToken).safeTransfer(optionsFeeAddress, fee);
+
+        _mint(order.maker, newOrderId, 1, "");
+        _mint(order.taker, newOrderId, 1, "");
+        _registerOrderForSettlement(newOrderId);
+
+        emit OrderCreated(newOrderId);
+        emit OrderMatched(newOrderId, order.taker, takerPremium);
+
+        return newOrderId;
     }
 
     //@@inheritdoc
@@ -214,7 +279,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     //@@inheritdoc
     function cancelOrder(uint256 orderId) external {
         BinaryOption storage order = orders[orderId];
-        if (msg.sender != order.metadata.maker) {
+        if (_msgSender() != order.metadata.maker) {
             revert Errors.OrderBook_CallerNotMaker();
         }
 
@@ -243,7 +308,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
      */
     function updateOrder(uint256 orderId, UpdateOrder memory updateOrder) external {
         BinaryOption storage order = orders[orderId];
-        if (msg.sender != order.metadata.maker) {
+        if (_msgSender() != order.metadata.maker) {
             revert Errors.OrderBook_CallerNotMaker();
         }
 
@@ -268,7 +333,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
             if (updateOrder.premium >= order.premiums.makerPremium) {
                 uint256 premiumIncrease = updateOrder.premium - order.premiums.makerPremium;
                 order.premiums.makerPremium = updateOrder.premium;
-                IERC20(order.metadata.collateralToken).safeTransferFrom(msg.sender, address(this), premiumIncrease);
+                IERC20(order.metadata.collateralToken).safeTransferFrom(_msgSender(), address(this), premiumIncrease);
                 emit PremiumIncreased(orderId, updateOrder.premium);
             } else {
                 uint256 premiumDecrease = order.premiums.makerPremium - updateOrder.premium;
@@ -276,7 +341,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
                     revert Errors.OrderBook_LessThanMinCollateralAmount();
                 }
                 order.premiums.makerPremium = updateOrder.premium;
-                IERC20(order.metadata.collateralToken).safeTransfer(msg.sender, premiumDecrease);
+                IERC20(order.metadata.collateralToken).safeTransfer(_msgSender(), premiumDecrease);
                 emit PremiumDecreased(orderId, updateOrder.premium);
             }
         }
@@ -390,7 +455,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155 {
     {
         return Metadata({
             status: Status.Pending,
-            maker: msg.sender,
+            maker: _msgSender(),
             taker: address(0),
             collateralToken: collateralToken,
             initialStrike: strike,

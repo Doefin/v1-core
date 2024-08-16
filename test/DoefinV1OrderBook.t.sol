@@ -181,6 +181,95 @@ contract DoefinV1OrderBook_Test is Base_Test {
         assertEq(orderBook.balanceOf(users.alice, orderId), 1);
     }
 
+    function test__createAndMatchOrder(uint256 strike, uint256 premium, uint256 expiry, address counterparty) public {
+        vm.assume(strike != 0);
+        vm.assume(expiry != 0);
+        vm.assume(counterparty != address(0));
+        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+
+        uint256 notional = premium + ((30 * premium) / 100);
+        address[] memory allowed = new address[](0);
+
+        IDoefinV1OrderBook.MatchedOrder memory matchedOrder = IDoefinV1OrderBook.MatchedOrder({
+            maker: users.alice,
+            taker: users.james,
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            allowed: allowed
+        });
+
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
+        vm.stopBroadcast();
+
+        vm.startBroadcast(users.james);
+        dai.approve(address(orderBook), premium);
+        vm.stopBroadcast();
+
+        vm.expectRevert("Caller is not an authorized relayer");
+        orderBook.createAndMatchOrder(matchedOrder);
+
+        vm.startBroadcast(users.relayer);
+        matchedOrder.strike = 0;
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_ZeroStrike.selector));
+        orderBook.createAndMatchOrder(matchedOrder);
+        matchedOrder.strike = strike;
+        vm.stopBroadcast();
+
+        vm.startBroadcast(users.relayer);
+        matchedOrder.collateralToken = address(0);
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_InvalidCollateralToken.selector));
+        orderBook.createAndMatchOrder(matchedOrder);
+        matchedOrder.collateralToken = collateralToken;
+        vm.stopBroadcast();
+
+        vm.startBroadcast(users.relayer);
+        matchedOrder.premium = minCollateralAmount - 10;
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_InvalidMinCollateralAmount.selector));
+        orderBook.createAndMatchOrder(matchedOrder);
+        matchedOrder.premium = premium;
+        vm.stopBroadcast();
+
+        vm.startBroadcast(users.relayer);
+        matchedOrder.expiry = 0;
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_ZeroExpiry.selector));
+        orderBook.createAndMatchOrder(matchedOrder);
+        matchedOrder.expiry = expiry;
+        vm.stopBroadcast();
+
+        vm.startBroadcast(users.relayer);
+        matchedOrder.notional = 0;
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_InvalidNotional.selector));
+        orderBook.createAndMatchOrder(matchedOrder);
+        matchedOrder.notional = notional;
+        vm.stopBroadcast();
+
+        uint256 feeBalBefore = IERC20(matchedOrder.collateralToken).balanceOf(users.feeAddress);
+
+        vm.startBroadcast(users.relayer);
+        uint256 orderId = orderBook.createAndMatchOrder(matchedOrder);
+        assertEq(orderBook.balanceOf(matchedOrder.maker, orderId), 1);
+        assertEq(orderBook.balanceOf(matchedOrder.taker, orderId), 1);
+        vm.stopBroadcast();
+
+        IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
+        uint256 orderBookBalAfter = IERC20(order.metadata.collateralToken).balanceOf(address(orderBook));
+
+        assertEq(order.metadata.taker, matchedOrder.taker);
+        assertEq(order.metadata.payOut, order.premiums.notional - (order.premiums.notional / 100));
+
+        assertEq(
+            IERC20(order.metadata.collateralToken).balanceOf(users.feeAddress) - feeBalBefore,
+            order.premiums.notional - order.metadata.payOut
+        );
+        assertEq(order.premiums.takerPremium + order.premiums.makerPremium, order.premiums.notional);
+    }
+
     function test__CancelOrder(uint256 strike, uint256 premium, uint256 expiry, address counterparty) public {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);

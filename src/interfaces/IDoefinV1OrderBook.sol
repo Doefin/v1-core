@@ -100,6 +100,18 @@ interface IDoefinV1OrderBook {
         uint256 strike;
     }
 
+    struct MatchedOrder {
+        address maker;
+        address taker;
+        uint256 strike;
+        uint256 premium;
+        uint256 notional;
+        uint256 expiry;
+        ExpiryType expiryType;
+        Position position;
+        address collateralToken;
+        address[] allowed;
+    }
     // Errors
 
     /// @notice Error thrown when an action is not allowed by the rules.

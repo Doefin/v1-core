@@ -14,9 +14,11 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     //////////////////////////////////////////////////////////////////////////*/
     address public feeAddress;
     address public orderBook;
+    address public trustedForwarder;
     address public blockHeaderOracle;
-    mapping(address => ApprovedToken) public approvedTokens;
+    address public authorizedRelayer;
     mapping(address => OrderBook) public orderBooks;
+    mapping(address => ApprovedToken) public approvedTokens;
 
     /*//////////////////////////////////////////////////////////////////////////
                                    CONSTRUCTOR
@@ -91,6 +93,26 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
         emit SetBlockHeaderOracle(newBlockHeaderOracle);
     }
 
+    //@@inheritdoc
+    function setTrustedForwarder(address newTrustedForwarder) external {
+        if (newTrustedForwarder == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+
+        trustedForwarder = newTrustedForwarder;
+        emit SetTrustedForwarder(newTrustedForwarder);
+    }
+
+    //@@inheritdoc
+    function setAuthorizedRelayer(address newAuthorizedRelayer) external {
+        if (newAuthorizedRelayer == address(0)) {
+            revert Errors.ZeroAddress();
+        }
+
+        authorizedRelayer = newAuthorizedRelayer;
+        emit SetAuthorizedRelayer(newAuthorizedRelayer);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                    GETTER FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
@@ -111,7 +133,17 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     }
 
     //@@inheritdoc IDoefinConfig
-    function getOrderBook() external view returns (address) {
+    function getOrderBook() public view returns (address) {
         return orderBook;
+    }
+
+    //@@inheritdoc IDoefinConfig
+    function getTrustedForwarder() public view returns (address) {
+        return trustedForwarder;
+    }
+
+    //@@inheritdoc IDoefinConfig
+    function getAuthorizedRelayer() public view returns (address) {
+        return authorizedRelayer;
     }
 }

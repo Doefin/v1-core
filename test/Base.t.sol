@@ -45,7 +45,8 @@ abstract contract Base_Test is Test, Assertions, Constants {
             james: createUser("James"),
             rick: createUser("Rick"),
             broker: createUser("Broker"),
-            feeAddress: createUser("FeeAddress")
+            feeAddress: createUser("FeeAddress"),
+            relayer: createUser("relayer")
         });
     }
 
@@ -67,6 +68,7 @@ abstract contract Base_Test is Test, Assertions, Constants {
         config = new DoefinV1Config();
         config.addTokenToApprovedList(address(dai), 100);
         config.addTokenToApprovedList(address(usdt), 100);
+        config.setAuthorizedRelayer(users.relayer);
         vm.label({ account: address(config), newLabel: "DoefinV1Config" });
     }
 
