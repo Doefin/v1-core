@@ -56,7 +56,7 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     }
 
     //@@inheritdoc IDoefinConfig
-    function tokenIsInApprovedList(address token) public returns (bool) {
+    function tokenIsInApprovedList(address token) public view returns (bool) {
         return address(approvedTokens[token].token) != address(0);
     }
 

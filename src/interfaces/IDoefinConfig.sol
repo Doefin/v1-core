@@ -58,7 +58,7 @@ interface IDoefinConfig {
     /// @notice Checks if  the token is in the approved list
     /// @param token Token to be check in the approved list
     /// @return true/false
-    function tokenIsInApprovedList(address token) external returns (bool);
+    function tokenIsInApprovedList(address token) external view returns (bool);
 
     /// @notice Set the order book address
     /// @param orderBook The order book address

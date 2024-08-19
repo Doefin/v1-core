@@ -49,16 +49,19 @@ contract DoefinV1OrderBook_Test is Base_Test {
         address[] memory allowed = new address[](1);
         allowed[0] = counterparty;
 
-        orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        orderBook.createOrder(createOrderInput);
     }
 
     function testFail__createOrderWithAmountLessThanMinStrike(
@@ -78,16 +81,19 @@ contract DoefinV1OrderBook_Test is Base_Test {
         address[] memory allowed = new address[](1);
         allowed[0] = counterparty;
 
-        orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        orderBook.createOrder(createOrderInput);
     }
 
     function testFail__createOrderWithZeroExpiry(
@@ -107,16 +113,19 @@ contract DoefinV1OrderBook_Test is Base_Test {
         address[] memory allowed = new address[](1);
         allowed[0] = counterparty;
 
-        orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        orderBook.createOrder(createOrderInput);
     }
 
     function testFail__TransferTokenAfterCreateOrder(
@@ -139,16 +148,20 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
 
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         orderBook.safeTransferFrom(users.alice, users.broker, orderId, 1, "");
     }
 
@@ -168,16 +181,20 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.expectEmit();
         emit IDoefinV1OrderBook.OrderCreated(0);
 
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         assertEq(orderBook.balanceOf(users.alice, orderId), 1);
     }
 
@@ -190,7 +207,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](0);
 
-        IDoefinV1OrderBook.MatchedOrder memory matchedOrder = IDoefinV1OrderBook.MatchedOrder({
+        IDoefinV1OrderBook.CreateAndMatchOrderInput memory matchedOrder = IDoefinV1OrderBook.CreateAndMatchOrderInput({
             maker: users.alice,
             taker: users.james,
             strike: strike,
@@ -286,16 +303,20 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.expectEmit();
         emit IDoefinV1OrderBook.OrderCreated(0);
 
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         vm.stopBroadcast();
 
         IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
@@ -338,16 +359,19 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
 
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
 
         // Prepare update parameters
         IDoefinV1OrderBook.UpdateOrder memory updateParams;
@@ -433,16 +457,20 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
 
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         vm.stopBroadcast();
 
         // Prepare update parameters
@@ -494,16 +522,21 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -533,16 +566,21 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -571,16 +609,21 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -603,16 +646,20 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](0);
 
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         vm.stopBroadcast();
         IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
 
@@ -664,16 +711,21 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         vm.stopBroadcast();
 
         IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
@@ -720,16 +772,21 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         vm.stopBroadcast();
 
         IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
@@ -783,16 +840,21 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -801,57 +863,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.matchOrder(orderId);
         vm.stopBroadcast();
 
-        orderBook.exerciseOrder(orderId);
-    }
-
-    function testFail__exerciseOrderWhenExerciseWindowHasNotStarted(
-        uint256 strike,
-        uint256 premium,
-        uint256 expiry,
-        uint256 timestamp,
-        address counterparty,
-        uint256 blockNumber,
-        uint256 difficulty
-    )
-        public
-    {
-        uint256 expiry = block.timestamp + 2 days;
-
-        vm.assume(strike != 0);
-        vm.assume(timestamp != 0);
-        vm.assume(counterparty != address(0));
-        vm.assume(blockNumber > expiry);
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
-
-        uint256 notional = premium + ((30 * premium) / 100);
-        address[] memory allowed = new address[](1);
-        allowed[0] = users.broker;
-
-        vm.startBroadcast(users.alice);
-        dai.approve(address(orderBook), premium);
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
-        vm.stopBroadcast();
-
-        vm.startBroadcast(users.broker);
-        dai.approve(address(orderBook), premium);
-
-        orderBook.matchOrder(orderId);
-        vm.stopBroadcast();
-
-        vm.startBroadcast(orderBook.blockHeaderOracle());
-        orderBook.settleOrder(blockNumber, timestamp, difficulty);
-        vm.stopBroadcast();
-
-        rewind(1);
         orderBook.exerciseOrder(orderId);
     }
 
@@ -881,16 +892,20 @@ contract DoefinV1OrderBook_Test is Base_Test {
         address[] memory allowed = new address[](1);
         allowed[0] = users.broker;
 
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
@@ -950,16 +965,20 @@ contract DoefinV1OrderBook_Test is Base_Test {
         address[] memory allowed = new address[](1);
         allowed[0] = users.broker;
 
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.Timestamp,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.Timestamp,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
