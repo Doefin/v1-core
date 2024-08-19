@@ -39,7 +39,7 @@ library Errors {
     error OrderBook_InvalidMinCollateralAmount();
 
     /// @notice Thrown when the period to match an order has expired
-    error OrderBook_MatchOrderExpired();
+    error OrderBook_OrderExpired();
 
     /// @notice Thrown when the period to exercise an order has not reached
     error OrderBook_NotWithinExerciseWindow();

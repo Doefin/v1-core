@@ -31,11 +31,17 @@ interface IDoefinConfig {
     /// @notice Emitted when the order book address is set
     event SetOrderBook(address indexed optionsManager);
 
-    /// @notice Emitted when the fee address is updated
+    /// @notice Emitted when the fee address is set
     event SetFeeAddress(address indexed feeAddress);
 
-    /// @notice Emitted when the block header address is updated
+    /// @notice Emitted when the block header address is set
     event SetBlockHeaderOracle(address indexed blockHeaderOracle);
+
+    /// @notice Emitted when the trusted forwarder address is set
+    event SetTrustedForwarder(address indexed trustedForwarder);
+
+    /// @notice Emitted when the authorized relayer address is set
+    event SetAuthorizedRelayer(address indexed authorizedRelayer);
 
     /*//////////////////////////////////////////////////////////////////////////
                                NON-CONSTANT FUNCTIONS
@@ -52,7 +58,7 @@ interface IDoefinConfig {
     /// @notice Checks if  the token is in the approved list
     /// @param token Token to be check in the approved list
     /// @return true/false
-    function tokenIsInApprovedList(address token) external returns (bool);
+    function tokenIsInApprovedList(address token) external view returns (bool);
 
     /// @notice Set the order book address
     /// @param orderBook The order book address
@@ -64,8 +70,16 @@ interface IDoefinConfig {
     function setFeeAddress(address feeAddress) external;
 
     /// @notice Updates the block header oracle
-    /// @param newBlockHeaderOracle The new block header oracle address
-    function setBlockHeaderOracle(address newBlockHeaderOracle) external;
+    /// @param blockHeaderOracle The new block header oracle address
+    function setBlockHeaderOracle(address blockHeaderOracle) external;
+
+    /// @notice Set the trusted forwarder
+    /// @param trustedForwarder The trusted forwarder address
+    function setTrustedForwarder(address trustedForwarder) external;
+
+    /// @notice Set the authorized relayer address
+    /// @param authorizedRelayer The authorized relayer address
+    function setAuthorizedRelayer(address authorizedRelayer) external;
 
     /*//////////////////////////////////////////////////////////////////////////
                                  CONSTANT FUNCTIONS
@@ -86,4 +100,12 @@ interface IDoefinConfig {
     /// @notice Returns the address of the order book contract
     /// @return The order book contract address
     function getOrderBook() external view returns (address);
+
+    /// @notice Return the trusted forwarder address
+    /// @return The trusted forwarder address
+    function getTrustedForwarder() external view returns (address);
+
+    /// @notice Return the authorized relayer address
+    /// @return The authorized relayer address
+    function getAuthorizedRelayer() external view returns (address);
 }

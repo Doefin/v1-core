@@ -58,8 +58,7 @@ interface IDoefinV1OrderBook {
      * @param finalStrike The strike value of the bitcoin difficulty at settlement
      * @param expiry The block number at which the strike is expected to be evaluated
      * @param expiryType The expiry type of the order to be created {BlockNumber or Timestamp}
-     * @param exerciseWindowStart The timestamp from when the option can start to be exercised.
-     * @param exerciseWindowEnd The timestamp after which the option can no longer be exercised.
+     * @param deadline The deadline before when the option can be matched.
      * @param allowed Addresses that are allowed to buy the issuance. If the array is empty, all addresses are allowed
      *        to buy the issuance.
      */
@@ -73,8 +72,7 @@ interface IDoefinV1OrderBook {
         uint256 payOut;
         uint256 expiry;
         ExpiryType expiryType;
-        uint256 exerciseWindowStart;
-        uint256 exerciseWindowEnd;
+        uint256 deadline;
         address[] allowed;
     }
 
@@ -98,6 +96,31 @@ interface IDoefinV1OrderBook {
         ExpiryType expiryType;
         address[] allowed;
         uint256 strike;
+    }
+
+    struct CreateAndMatchOrderInput {
+        address maker;
+        address taker;
+        uint256 strike;
+        uint256 premium;
+        uint256 notional;
+        uint256 expiry;
+        ExpiryType expiryType;
+        Position position;
+        address collateralToken;
+        address[] allowed;
+    }
+
+    struct CreateOrderInput {
+        uint256 strike;
+        uint256 premium;
+        uint256 notional;
+        uint256 expiry;
+        ExpiryType expiryType;
+        Position position;
+        address collateralToken;
+        uint256 deadline;
+        address[] allowed;
     }
 
     // Errors
@@ -187,30 +210,7 @@ interface IDoefinV1OrderBook {
 
     // Interface methods
 
-    /**
-     * @dev Struct to store essential details about a vanilla option.
-     * @param strike The difficulty of BTC at a specified expiry
-     * @param premium The premium of the option
-     * @param premium The notional of the option
-     * @param expiry The block number or timestamp at which the strike is expected to be evaluated
-     * @param expiryType The expiry type of the order to be created
-     * @param position The position of the maker of the order
-     * @param collateralToken The collateral token the order is created in
-     * @param allowed Addresses that are allowed to buy the issuance. If the array is empty, all addresses are allowed
-     *        to buy the issuance.
-     */
-    function createOrder(
-        uint256 strike,
-        uint256 premium,
-        uint256 notional,
-        uint256 expiry,
-        ExpiryType expiryType,
-        Position position,
-        address collateralToken,
-        address[] calldata allowed
-    )
-        external
-        returns (uint256);
+    function createOrder(CreateOrderInput calldata order) external returns (uint256);
 
     /**
      * @dev Match a given order by a maker

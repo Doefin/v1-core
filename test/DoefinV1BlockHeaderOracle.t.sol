@@ -108,16 +108,20 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
         vm.stopBroadcast();
 
         vm.startBroadcast(counterparty);
@@ -156,16 +160,20 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
-        uint256 orderId = orderBook.createOrder(
-            strike,
-            premium,
-            notional,
-            expiry,
-            IDoefinV1OrderBook.ExpiryType.Timestamp,
-            IDoefinV1OrderBook.Position.Put,
-            collateralToken,
-            allowed
-        );
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.Timestamp,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
         vm.stopBroadcast();
 
         vm.startBroadcast(counterparty);
