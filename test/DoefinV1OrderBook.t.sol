@@ -295,7 +295,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
-        allowed[0] = counterparty;
+        allowed[0] = users.broker;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
@@ -320,7 +320,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
 
         IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
-        uint256 makerPrevBalance = IERC20(order.metadata.collateralToken).balanceOf(order.metadata.maker);
 
         // Revert if caller is not maker
         vm.startBroadcast(users.james);
@@ -328,22 +327,36 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.cancelOrder(orderId);
         vm.stopBroadcast();
 
-        vm.expectEmit();
-        emit IDoefinV1OrderBook.OrderCanceled(orderId);
+        //Match order
+        vm.startBroadcast(users.broker);
+        dai.approve(address(orderBook), premium);
+        orderBook.matchOrder(orderId);
+        vm.stopBroadcast();
 
         // Revert if order is not pending
         vm.startBroadcast(users.alice);
-        orderBook.cancelOrder(orderId);
         vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_OrderMustBePending.selector));
         orderBook.cancelOrder(orderId);
         vm.stopBroadcast();
 
+        // Cancel an order
+        vm.startBroadcast(users.admin);
+        dai.approve(address(orderBook), premium);
+        orderId = orderBook.createOrder(createOrderInput);
+
         order = orderBook.getOrder(orderId);
+        uint256 makerPrevBalance = IERC20(order.metadata.collateralToken).balanceOf(order.metadata.maker);
+
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderCanceled(orderId);
+        emit IDoefinV1OrderBook.OrderDeleted(orderId);
+        orderBook.cancelOrder(orderId);
+
         uint256 makerCurrBalance = IERC20(order.metadata.collateralToken).balanceOf(order.metadata.maker);
 
         assertEq(makerCurrBalance - makerPrevBalance, order.premiums.makerPremium);
         assertEq(orderBook.balanceOf(order.metadata.maker, 1), 0);
-        assert(order.metadata.status == IDoefinV1OrderBook.Status.Canceled);
+        vm.stopBroadcast();
     }
 
     function test__UpdateOrder(uint256 strike, uint256 premium, uint256 expiry, address counterparty) public {
@@ -429,9 +442,14 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.updateOrder(orderId, updateParams);
         vm.stopBroadcast();
 
+        //Match order
+        vm.startBroadcast(users.broker);
+        dai.approve(address(orderBook), premium);
+        orderBook.matchOrder(orderId);
+        vm.stopBroadcast();
+
         // Revert if order is not pending
         vm.startBroadcast(users.alice);
-        orderBook.cancelOrder(orderId);
         vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_OrderMustBePending.selector));
         orderBook.updateOrder(orderId, updateParams);
         vm.stopBroadcast();
@@ -499,87 +517,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
-    function test__deleteOrder(
-        uint256 strike,
-        uint256 premium,
-        uint256 expiry,
-        uint256 timestamp,
-        address counterparty,
-        uint256 blockNumber,
-        uint256 difficulty
-    )
-        public
-    {
-        uint256 expiry = block.timestamp + 2 days;
-
-        vm.assume(strike != 0);
-        vm.assume(timestamp > expiry);
-        vm.assume(counterparty != address(0));
-        vm.assume(blockNumber != 0);
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
-
-        vm.startBroadcast(users.alice);
-        dai.approve(address(orderBook), premium);
-
-        uint256 notional = premium + ((30 * premium) / 100);
-        address[] memory allowed = new address[](1);
-        allowed[0] = users.broker;
-
-        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
-            strike: strike,
-            premium: premium,
-            notional: notional,
-            expiry: expiry,
-            expiryType: IDoefinV1OrderBook.ExpiryType.Timestamp,
-            position: IDoefinV1OrderBook.Position.Put,
-            collateralToken: collateralToken,
-            deadline: 1 days,
-            allowed: allowed
-        });
-
-        uint256 orderId = orderBook.createOrder(createOrderInput);
-
-        vm.stopBroadcast();
-
-        vm.startBroadcast(users.broker);
-        dai.approve(address(orderBook), premium);
-
-        orderBook.matchOrder(orderId);
-        vm.stopBroadcast();
-
-        //Revert if order status is not Exercised neither Canceled not Excercised
-        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_CannotDeleteOrder.selector));
-        orderBook.deleteOrder(orderId);
-
-        //Revert if order not canceled by the maker
-        vm.startBroadcast(users.broker);
-        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_CannotDeleteOrder.selector));
-        orderBook.deleteOrder(orderId);
-        vm.stopBroadcast();
-
-        vm.startBroadcast(orderBook.blockHeaderOracle());
-        orderBook.settleOrder(blockNumber, timestamp, difficulty);
-        vm.stopBroadcast();
-
-        orderBook.exerciseOrder(orderId);
-        IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
-
-        //Delete order after exercising
-        vm.expectEmit();
-        emit IDoefinV1OrderBook.OrderDeleted(orderId);
-        orderBook.deleteOrder(orderId);
-
-        vm.startBroadcast(users.broker);
-        dai.approve(address(orderBook), premium);
-        orderId = orderBook.createOrder(createOrderInput);
-        orderBook.cancelOrder(orderId);
-
-        //Delete order after canceling order
-        vm.expectEmit();
-        emit IDoefinV1OrderBook.OrderDeleted(orderId);
-        orderBook.deleteOrder(orderId);
-        vm.stopBroadcast();
-    }
     /*//////////////////////////////////////////////////////////////
                   MATCH ORDER
     //////////////////////////////////////////////////////////////*/
@@ -1017,7 +954,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
         }
 
         vm.expectEmit();
-        emit IDoefinV1OrderBook.OrderExercised(orderId, orderBook.getOrder(orderId).metadata.payOut, winner);
+        emit IDoefinV1OrderBook.OrderDeleted(orderId);
+        emit IDoefinV1OrderBook.OrderExercised(orderId, order.metadata.payOut, winner);
         orderBook.exerciseOrder(orderId);
     }
 
@@ -1090,6 +1028,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         }
 
         vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderDeleted(orderId);
         emit IDoefinV1OrderBook.OrderExercised(orderId, orderBook.getOrder(orderId).metadata.payOut, winner);
         orderBook.exerciseOrder(orderId);
     }
