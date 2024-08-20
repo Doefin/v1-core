@@ -498,6 +498,88 @@ contract DoefinV1OrderBook_Test is Base_Test {
         assertEq(updatedOrder.premiums.makerPremium, updateParams.premium);
         vm.stopBroadcast();
     }
+
+    function test__deleteOrder(
+        uint256 strike,
+        uint256 premium,
+        uint256 expiry,
+        uint256 timestamp,
+        address counterparty,
+        uint256 blockNumber,
+        uint256 difficulty
+    )
+        public
+    {
+        uint256 expiry = block.timestamp + 2 days;
+
+        vm.assume(strike != 0);
+        vm.assume(timestamp > expiry);
+        vm.assume(counterparty != address(0));
+        vm.assume(blockNumber != 0);
+        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
+
+        uint256 notional = premium + ((30 * premium) / 100);
+        address[] memory allowed = new address[](1);
+        allowed[0] = users.broker;
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.Timestamp,
+            position: IDoefinV1OrderBook.Position.Put,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
+        vm.stopBroadcast();
+
+        vm.startBroadcast(users.broker);
+        dai.approve(address(orderBook), premium);
+
+        orderBook.matchOrder(orderId);
+        vm.stopBroadcast();
+
+        //Revert if order status is not Exercised neither Canceled not Excercised
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_CannotDeleteOrder.selector));
+        orderBook.deleteOrder(orderId);
+
+        //Revert if order not canceled by the maker
+        vm.startBroadcast(users.broker);
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_CannotDeleteOrder.selector));
+        orderBook.deleteOrder(orderId);
+        vm.stopBroadcast();
+
+        vm.startBroadcast(orderBook.blockHeaderOracle());
+        orderBook.settleOrder(blockNumber, timestamp, difficulty);
+        vm.stopBroadcast();
+
+        orderBook.exerciseOrder(orderId);
+        IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
+
+        //Delete order after exercising
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderDeleted(orderId);
+        orderBook.deleteOrder(orderId);
+
+        vm.startBroadcast(users.broker);
+        dai.approve(address(orderBook), premium);
+        orderId = orderBook.createOrder(createOrderInput);
+        orderBook.cancelOrder(orderId);
+
+        //Delete order after canceling order
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderDeleted(orderId);
+        orderBook.deleteOrder(orderId);
+        vm.stopBroadcast();
+    }
     /*//////////////////////////////////////////////////////////////
                   MATCH ORDER
     //////////////////////////////////////////////////////////////*/

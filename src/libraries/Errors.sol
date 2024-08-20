@@ -74,6 +74,9 @@ library Errors {
     /// @notice Thrown when a non-trader is trying to cancel an order
     error OrderBook_CallerNotMaker();
 
+    /// @notice Thrown when an order cannot be deleted
+    error OrderBook_CannotDeleteOrder();
+
     /*//////////////////////////////////////////////////////////////////////////
                               BLOCK HEADER ORACLE
     //////////////////////////////////////////////////////////////////////////*/
