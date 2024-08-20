@@ -197,8 +197,10 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
                 IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.taker, order.metadata.payOut);
             }
         }
-
         emit OrderExercised(orderId, order.metadata.payOut, winner);
+
+        delete orders[orderId];
+        emit OrderDeleted(orderId);
         return orderId;
     }
 
@@ -240,7 +242,9 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         order.metadata.status = Status.Canceled;
         _burn(order.metadata.maker, orderId, 1);
         IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.premiums.makerPremium);
+        delete orders[orderId];
         emit OrderCanceled(orderId);
+        emit OrderDeleted(orderId);
     }
 
     //@@inheritdoc
@@ -321,20 +325,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         if (updateOrder.strike != 0) {
             order.metadata.initialStrike = updateOrder.strike;
             emit OrderStrikeUpdated(orderId, updateOrder.strike);
-        }
-    }
-
-    /**
-     * @dev Delete a canceled or exercised order
-     * @param orderId The order id of the order to delete
-     */
-    function deleteOrder(uint256 orderId) external {
-        BinaryOption storage order = orders[orderId];
-        if (order.metadata.status == Status.Canceled || order.metadata.status == Status.Exercised) {
-            delete orders[orderId];
-            emit OrderDeleted(orderId);
-        } else {
-            revert Errors.OrderBook_CannotDeleteOrder();
         }
     }
 
