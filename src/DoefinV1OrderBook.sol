@@ -324,6 +324,20 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         }
     }
 
+    /**
+     * @dev Delete a canceled or exercised order
+     * @param orderId The order id of the order to delete
+     */
+    function deleteOrder(uint256 orderId) external {
+        BinaryOption storage order = orders[orderId];
+        if (order.metadata.status == Status.Canceled || order.metadata.status == Status.Exercised) {
+            delete orders[orderId];
+            emit OrderDeleted(orderId);
+        } else {
+            revert Errors.OrderBook_CannotDeleteOrder();
+        }
+    }
+
     function uri(uint256 id) public view override returns (string memory) {
         return "";
     }

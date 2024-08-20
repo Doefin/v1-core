@@ -208,6 +208,10 @@ interface IDoefinV1OrderBook {
     /// @param strike The new strike of the order
     event OrderStrikeUpdated(uint256 indexed id, uint256 strike);
 
+    /// @notice Emitted when an order is deleted
+    /// @param id The order id
+    event OrderDeleted(uint256 indexed id);
+
     // Interface methods
 
     function createOrder(CreateOrderInput calldata order) external returns (uint256);
