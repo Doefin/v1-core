@@ -188,4 +188,132 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
         assertEq(uint256(order.metadata.status), uint256(IDoefinV1OrderBook.Status.Settled));
         assertEq(order.metadata.finalStrike, BlockHeaderUtils.calculateDifficultyTarget(blockHeader));
     }
+
+    function test_UpdateCanonicalChain() public {
+        // Submit a few blocks to create a initial chain
+        for (uint256 i = 0; i < 5; i++) {
+            blockHeaderOracle.submitNextBlock(getNextBlocks()[i]);
+        }
+
+        uint256 initialBlockHeight = blockHeaderOracle.currentBlockHeight();
+        (bytes32 initialTipHash,) = blockHeaderOracle.canonicalChainTip();
+
+        // Create a new chain that forks from the 3rd block
+        IDoefinBlockHeaderOracle.BlockHeader[] memory newChain = new IDoefinBlockHeaderOracle.BlockHeader[](4);
+        newChain[0] = getNextBlocks()[2]; // Fork point
+        newChain[1] = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x20000000,
+            prevBlockHash: BlockHeaderUtils.calculateBlockHash(newChain[0]),
+            merkleRootHash: bytes32(uint256(1)),
+            timestamp: getNextBlocks()[2].timestamp + 600,
+            nBits: 0x1703ffff, // Higher difficulty
+            nonce: 0
+        });
+        newChain[2] = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x20000000,
+            prevBlockHash: BlockHeaderUtils.calculateBlockHash(newChain[1]),
+            merkleRootHash: bytes32(uint256(2)),
+            timestamp: getNextBlocks()[2].timestamp + 1200,
+            nBits: 0x1703ffff,
+            nonce: 0
+        });
+        newChain[3] = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x20000000,
+            prevBlockHash: BlockHeaderUtils.calculateBlockHash(newChain[2]),
+            merkleRootHash: bytes32(uint256(3)),
+            timestamp: getNextBlocks()[2].timestamp + 1800,
+            nBits: 0x1703ffff,
+            nonce: 0
+        });
+
+        vm.expectEmit();
+        emit IDoefinBlockHeaderOracle.BlockReorged(newChain[3].merkleRootHash);
+
+        blockHeaderOracle.updateCanonicalChain(newChain);
+
+        // Check that the chain was updated
+        (bytes32 currentTipHash,) = blockHeaderOracle.canonicalChainTip();
+        assertNotEq(currentTipHash, initialTipHash);
+        // We added one more block than we had before
+        assertEq(blockHeaderOracle.currentBlockHeight(), initialBlockHeight + 1);
+        assertEq(blockHeaderOracle.getLatestBlockHeader().merkleRootHash, newChain[3].merkleRootHash);
+    }
+
+    function test_UpdateCanonicalChain_FailNewChainNotLonger() public {
+        for (uint256 i = 0; i < 5; i++) {
+            blockHeaderOracle.submitNextBlock(getNextBlocks()[i]);
+        }
+
+        // Create a new chain that forks from the 3rd block but is not longer
+        IDoefinBlockHeaderOracle.BlockHeader[] memory newChain = new IDoefinBlockHeaderOracle.BlockHeader[](3);
+        newChain[0] = getNextBlocks()[2]; // Fork point
+        newChain[1] = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x20000000,
+            prevBlockHash: BlockHeaderUtils.calculateBlockHash(newChain[0]),
+            merkleRootHash: bytes32(uint256(1)),
+            timestamp: getNextBlocks()[2].timestamp + 600,
+            nBits: 0x1701ffff,
+            nonce: 0
+        });
+        newChain[2] = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x20000000,
+            prevBlockHash: BlockHeaderUtils.calculateBlockHash(newChain[1]),
+            merkleRootHash: bytes32(uint256(2)),
+            timestamp: getNextBlocks()[2].timestamp + 1200,
+            nBits: 0x1701ffff,
+            nonce: 0
+        });
+
+        vm.expectRevert(abi.encodeWithSelector(Errors.BlockHeaderOracle_NewChainNotLonger.selector));
+        blockHeaderOracle.updateCanonicalChain(newChain);
+    }
+
+    function test_UpdateCanonicalChain_FailCannotFindForkPoint() public {
+        for (uint256 i = 0; i < 5; i++) {
+            blockHeaderOracle.submitNextBlock(getNextBlocks()[i]);
+        }
+
+        // Create a new chain that doesn't fork from any known point
+        IDoefinBlockHeaderOracle.BlockHeader[] memory newChain = new IDoefinBlockHeaderOracle.BlockHeader[](3);
+        newChain[0] = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x20000000,
+            prevBlockHash: bytes32(uint256(123_456)),
+            merkleRootHash: bytes32(uint256(1)),
+            timestamp: uint32(block.timestamp),
+            nBits: 0x1703ffff,
+            nonce: 0
+        });
+        newChain[1] = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x20000000,
+            prevBlockHash: BlockHeaderUtils.calculateBlockHash(newChain[0]),
+            merkleRootHash: bytes32(uint256(2)),
+            timestamp: uint32(block.timestamp) + 600,
+            nBits: 0x1703ffff,
+            nonce: 0
+        });
+        newChain[2] = IDoefinBlockHeaderOracle.BlockHeader({
+            version: 0x20000000,
+            prevBlockHash: BlockHeaderUtils.calculateBlockHash(newChain[1]),
+            merkleRootHash: bytes32(uint256(3)),
+            timestamp: uint32(block.timestamp) + 1200,
+            nBits: 0x1703ffff,
+            nonce: 0
+        });
+
+        vm.expectRevert(abi.encodeWithSelector(Errors.BlockHeaderOracle_CannotFindForkPoint.selector));
+        blockHeaderOracle.updateCanonicalChain(newChain);
+    }
+
+    function test_CalculateCumulativeDifficulty() public {
+        (bytes32 initialTipHash,) = blockHeaderOracle.canonicalChainTip();
+        uint256 expectedDifficulty = blockHeaderOracle.cumulativeDifficulty(initialTipHash);
+
+        for (uint256 i = 0; i < 3; i++) {
+            blockHeaderOracle.submitNextBlock(getNextBlocks()[i]);
+            expectedDifficulty += BlockHeaderUtils.calculateDifficultyTarget(getNextBlocks()[i]);
+        }
+
+        (bytes32 tipHash,) = blockHeaderOracle.canonicalChainTip();
+        assertEq(blockHeaderOracle.cumulativeDifficulty(tipHash), expectedDifficulty);
+    }
 }

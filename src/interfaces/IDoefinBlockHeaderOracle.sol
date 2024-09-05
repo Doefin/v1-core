@@ -31,7 +31,18 @@ interface IDoefinBlockHeaderOracle {
         uint32 nonce;
     }
 
+    /**
+     * @dev
+     * @param tipHash The hash of the chain tip
+     * @param blockHeight The block height of the tip
+     */
+    struct ChainTip {
+        bytes32 tipHash;
+        uint256 blockHeight;
+    }
+
     // Events
+    event BlockReorged(bytes32 indexed merkleRootHash);
     event BlockSubmitted(bytes32 indexed merkleRootHash, uint32 indexed timestamp);
 
     // Interface methods
@@ -41,6 +52,12 @@ interface IDoefinBlockHeaderOracle {
      * @param newBlockHeader The newest block header to the added to the head of the ring buffer
      */
     function submitNextBlock(BlockHeader calldata newBlockHeader) external;
+
+    /**
+     * @notice Allows anyone to submit a block header to update the canonical chain
+     * @param newBlockHeaders The list of new block headers to be added to the canonical chain
+     */
+    function updateCanonicalChain(BlockHeader[] calldata newBlockHeaders) external;
 
     /**
      * @notice Get the median timestamp from the sorted timestamp list
