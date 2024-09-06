@@ -44,6 +44,9 @@ interface IDoefinBlockHeaderOracle {
     // Events
     event BlockReorged(bytes32 indexed merkleRootHash);
     event BlockSubmitted(bytes32 indexed merkleRootHash, uint32 indexed timestamp);
+    event BlockBatchSubmitted(
+        bytes32 indexed initialMerkleRootHash, bytes32 indexed finalMerkleRootHash, uint256 indexed totalBlocks
+    );
 
     // Interface methods
     /**
@@ -57,7 +60,7 @@ interface IDoefinBlockHeaderOracle {
      * @notice Allows anyone to submit a block header to update the canonical chain
      * @param newBlockHeaders The list of new block headers to be added to the canonical chain
      */
-    function updateCanonicalChain(BlockHeader[] calldata newBlockHeaders) external;
+    function submitBatchBlocks(BlockHeader[] calldata newBlockHeaders) external;
 
     /**
      * @notice Get the median timestamp from the sorted timestamp list

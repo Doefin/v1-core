@@ -189,14 +189,13 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
         assertEq(order.metadata.finalStrike, BlockHeaderUtils.calculateDifficultyTarget(blockHeader));
     }
 
-    function test_UpdateCanonicalChain() public {
+    function test_SubmitBatchBlocks() public {
         // Submit a few blocks to create a initial chain
         for (uint256 i = 0; i < 5; i++) {
             blockHeaderOracle.submitNextBlock(getNextBlocks()[i]);
         }
 
         uint256 initialBlockHeight = blockHeaderOracle.currentBlockHeight();
-        (bytes32 initialTipHash,) = blockHeaderOracle.canonicalChainTip();
 
         // Create a new chain that forks from the 3rd block
         IDoefinBlockHeaderOracle.BlockHeader[] memory newChain = new IDoefinBlockHeaderOracle.BlockHeader[](4);
@@ -229,17 +228,14 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
         vm.expectEmit();
         emit IDoefinBlockHeaderOracle.BlockReorged(newChain[3].merkleRootHash);
 
-        blockHeaderOracle.updateCanonicalChain(newChain);
+        blockHeaderOracle.submitBatchBlocks(newChain);
 
-        // Check that the chain was updated
-        (bytes32 currentTipHash,) = blockHeaderOracle.canonicalChainTip();
-        assertNotEq(currentTipHash, initialTipHash);
         // We added one more block than we had before
         assertEq(blockHeaderOracle.currentBlockHeight(), initialBlockHeight + 1);
         assertEq(blockHeaderOracle.getLatestBlockHeader().merkleRootHash, newChain[3].merkleRootHash);
     }
 
-    function test_UpdateCanonicalChain_FailNewChainNotLonger() public {
+    function test_SubmitBatchBlocks_FailNewChainNotLonger() public {
         for (uint256 i = 0; i < 5; i++) {
             blockHeaderOracle.submitNextBlock(getNextBlocks()[i]);
         }
@@ -265,10 +261,10 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
         });
 
         vm.expectRevert(abi.encodeWithSelector(Errors.BlockHeaderOracle_NewChainNotLonger.selector));
-        blockHeaderOracle.updateCanonicalChain(newChain);
+        blockHeaderOracle.submitBatchBlocks(newChain);
     }
 
-    function test_UpdateCanonicalChain_FailCannotFindForkPoint() public {
+    function test_SubmitBatchBlocks_FailCannotFindForkPoint() public {
         for (uint256 i = 0; i < 5; i++) {
             blockHeaderOracle.submitNextBlock(getNextBlocks()[i]);
         }
@@ -301,19 +297,6 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
         });
 
         vm.expectRevert(abi.encodeWithSelector(Errors.BlockHeaderOracle_CannotFindForkPoint.selector));
-        blockHeaderOracle.updateCanonicalChain(newChain);
-    }
-
-    function test_CalculateCumulativeDifficulty() public {
-        (bytes32 initialTipHash,) = blockHeaderOracle.canonicalChainTip();
-        uint256 expectedDifficulty = blockHeaderOracle.cumulativeDifficulty(initialTipHash);
-
-        for (uint256 i = 0; i < 3; i++) {
-            blockHeaderOracle.submitNextBlock(getNextBlocks()[i]);
-            expectedDifficulty += BlockHeaderUtils.calculateDifficultyTarget(getNextBlocks()[i]);
-        }
-
-        (bytes32 tipHash,) = blockHeaderOracle.canonicalChainTip();
-        assertEq(blockHeaderOracle.cumulativeDifficulty(tipHash), expectedDifficulty);
+        blockHeaderOracle.submitBatchBlocks(newChain);
     }
 }

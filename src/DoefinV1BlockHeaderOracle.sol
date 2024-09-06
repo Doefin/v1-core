@@ -51,12 +51,6 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
     /// @notice Ring buffer to store the block headers
     BlockHeader[NUM_OF_BLOCK_HEADERS] public blockHeaders;
 
-    /// @notice The canonical chain tip
-    ChainTip public canonicalChainTip;
-
-    /// @notice Stores cumulative difficulty for each block to compare chains
-    mapping(bytes32 => uint256) public cumulativeDifficulty;
-
     constructor(
         IDoefinBlockHeaderOracle.BlockHeader[NUM_OF_BLOCK_HEADERS] memory initialBlockHistory,
         uint256 initialBlockHeight,
@@ -69,11 +63,6 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
         nextBlockIndex = 0;
         currentBlockHeight = initialBlockHeight;
         config = IDoefinConfig(_config);
-
-        bytes32 initialTipHash = BlockHeaderUtils.calculateBlockHash(initialBlockHistory[NUM_OF_BLOCK_HEADERS - 1]);
-        canonicalChainTip = ChainTip({ tipHash: initialTipHash, blockHeight: initialBlockHeight });
-        cumulativeDifficulty[initialTipHash] =
-            BlockHeaderUtils.calculateDifficultyTarget(initialBlockHistory[NUM_OF_BLOCK_HEADERS - 1]);
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
@@ -100,33 +89,26 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
         );
 
         bytes32 newBlockHash = BlockHeaderUtils.calculateBlockHash(newBlockHeader);
-        _updateCumulativeDifficulty(
-            newBlockHash, newBlockHeader.prevBlockHash, BlockHeaderUtils.calculateDifficultyTarget(newBlockHeader)
-        );
-        canonicalChainTip = ChainTip({ tipHash: newBlockHash, blockHeight: currentBlockHeight });
-
         emit BlockSubmitted(newBlockHeader.merkleRootHash, newBlockHeader.timestamp);
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
-    function updateCanonicalChain(BlockHeader[] calldata newBlockHeaders) external {
+    function submitBatchBlocks(BlockHeader[] calldata newBlockHeaders) external {
         BlockHeader memory latestBlockHeader = newBlockHeaders[newBlockHeaders.length - 1];
         uint256 forkHeight = _findForkPoint(newBlockHeaders[0]);
 
-        uint256 currentCumulativeDifficulty = cumulativeDifficulty[canonicalChainTip.tipHash];
-        uint256 newCumulativeDifficulty = _calculateCumulativeDifficulty(newBlockHeaders);
-        if (newCumulativeDifficulty <= currentCumulativeDifficulty) {
+        if (forkHeight + newBlockHeaders.length <= currentBlockHeight) {
             revert Errors.BlockHeaderOracle_NewChainNotLonger();
         }
 
-        _revertChain(forkHeight);
-        _applyChain(newBlockHeaders);
-        canonicalChainTip = ChainTip({
-            tipHash: BlockHeaderUtils.calculateBlockHash(latestBlockHeader),
-            blockHeight: currentBlockHeight
-        });
+        nextBlockIndex = (nextBlockIndex + forkHeight - currentBlockHeight) % NUM_OF_BLOCK_HEADERS;
+        currentBlockHeight = forkHeight;
 
+        _applyChain(newBlockHeaders);
         emit BlockReorged(latestBlockHeader.merkleRootHash);
+        emit BlockBatchSubmitted(
+            newBlockHeaders[0].merkleRootHash, latestBlockHeader.merkleRootHash, newBlockHeaders.length
+        );
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
@@ -162,18 +144,6 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
     }
 
     /**
-     * @dev Revert the chain back to a certain height
-     * @param forkHeight The height to revert to
-     */
-    function _revertChain(uint256 forkHeight) internal {
-        while (currentBlockHeight > forkHeight) {
-            nextBlockIndex = (nextBlockIndex + NUM_OF_BLOCK_HEADERS - 1) % NUM_OF_BLOCK_HEADERS;
-            blockHeaders[nextBlockIndex] = BlockHeader(0, 0, 0, 0, 0, 0);
-            --currentBlockHeight;
-        }
-    }
-
-    /**
      * @dev Apply a series of new block headers to the chain
      * @param newBlockHeaders The block headers to apply
      */
@@ -182,40 +152,7 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
             blockHeaders[nextBlockIndex] = newBlockHeaders[i];
             nextBlockIndex = (nextBlockIndex + 1) % NUM_OF_BLOCK_HEADERS;
             ++currentBlockHeight;
-
-            // Update cumulative difficulty for each block
-            _updateCumulativeDifficulty(
-                BlockHeaderUtils.calculateBlockHash(newBlockHeaders[i]),
-                newBlockHeaders[i].prevBlockHash,
-                BlockHeaderUtils.calculateDifficultyTarget(newBlockHeaders[i])
-            );
         }
-    }
-
-    /**
-     * @dev Calculate the cumulative difficulty for a series of block headers
-     * @param newBlockHeaders The headers of the new chain
-     * @return _cumulativeDifficulty The total cumulative difficulty for the chain
-     */
-    function _calculateCumulativeDifficulty(BlockHeader[] memory newBlockHeaders)
-        internal
-        view
-        returns (uint256 _cumulativeDifficulty)
-    {
-        _cumulativeDifficulty = cumulativeDifficulty[newBlockHeaders[0].prevBlockHash];
-        for (uint256 i = 0; i < newBlockHeaders.length; i++) {
-            _cumulativeDifficulty += BlockHeaderUtils.calculateDifficultyTarget(newBlockHeaders[i]);
-        }
-    }
-
-    /**
-     * @dev Update cumulative difficulty for a block hash based on its parent
-     * @param blockHash The hash of the new block
-     * @param prevBlockHash The hash of the previous block (parent)
-     * @param difficulty The difficulty of the new block
-     */
-    function _updateCumulativeDifficulty(bytes32 blockHash, bytes32 prevBlockHash, uint256 difficulty) internal {
-        cumulativeDifficulty[blockHash] = cumulativeDifficulty[prevBlockHash] + difficulty;
     }
 
     /**
