@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity >=0.8.19;
+
 import "forge-std/Console.sol";
 
 import { Base_Test } from "./Base.t.sol";
@@ -132,9 +133,6 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
         orderBook.matchOrder(orderId);
         vm.stopBroadcast();
 
-//        IDoefinBlockHeaderOracle.BlockHeader memory blockHeader = getNextBlocks()[0];
-//        blockHeaderOracle.submitNextBlock(blockHeader);
-
         // Submit 6 blocks (settlement should not occur yet)
         IDoefinBlockHeaderOracle.BlockHeader[18] memory nextBlocks = getNextBlocks();
         for (uint256 i = 0; i < 6; i++) {
@@ -146,60 +144,7 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
 
         IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
         assertEq(uint256(order.metadata.status), uint256(IDoefinV1OrderBook.Status.Settled));
-//        assertEq(order.metadata.finalStrike, BlockHeaderUtils.calculateDifficultyTarget(blockHeader));
     }
-
-//    function test__settleOrderByTimestampAfterSubmittingNextBlock(
-//        uint256 strike,
-//        uint256 premium,
-//        uint256 expiry,
-//        address counterparty
-//    )
-//        public
-//    {
-//        IDoefinBlockHeaderOracle.BlockHeader memory blockHeader = getNextBlocks()[1];
-//
-//        uint256 expiry = blockHeader.timestamp;
-//        vm.assume(strike != 0);
-//        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
-//        vm.assume(counterparty == users.broker || counterparty == users.rick || counterparty == users.james);
-//
-//        uint256 notional = premium + ((30 * premium) / 100);
-//        address[] memory allowed = new address[](3);
-//        allowed[0] = users.broker;
-//        allowed[1] = users.rick;
-//        allowed[2] = users.james;
-//
-//        vm.startBroadcast(users.alice);
-//        dai.approve(address(orderBook), premium);
-//
-//        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
-//            strike: strike,
-//            premium: premium,
-//            notional: notional,
-//            expiry: expiry,
-//            expiryType: IDoefinV1OrderBook.ExpiryType.Timestamp,
-//            position: IDoefinV1OrderBook.Position.Put,
-//            collateralToken: collateralToken,
-//            deadline: 1 days,
-//            allowed: allowed
-//        });
-//
-//        uint256 orderId = orderBook.createOrder(createOrderInput);
-//        vm.stopBroadcast();
-//
-//        vm.startBroadcast(counterparty);
-//        dai.approve(address(orderBook), premium);
-//        orderBook.matchOrder(orderId);
-//        vm.stopBroadcast();
-//
-//        blockHeaderOracle.submitNextBlock(getNextBlocks()[0]);
-//        blockHeaderOracle.submitNextBlock(blockHeader);
-//
-//        IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
-//        assertEq(uint256(order.metadata.status), uint256(IDoefinV1OrderBook.Status.Settled));
-//        assertEq(order.metadata.finalStrike, BlockHeaderUtils.calculateDifficultyTarget(blockHeader));
-//    }
 
     function test_SubmitBatchBlocks() public {
         uint256 initialBlockHeight = blockHeaderOracle.currentBlockHeight();
