@@ -153,6 +153,6 @@ library BlockHeaderUtils {
 
     function median(uint256[11] memory array) internal pure returns (uint256) {
         sort(array, 0, 11);
-        return (array[4] + array[5]) / 2;
+        return array[5]; //(array[4] + array[5]) / 2;
     }
 }

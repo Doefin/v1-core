@@ -209,9 +209,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         uint256 len = registeredOrderIds.length;
         for (uint256 i = 0; i < len; i++) {
             BinaryOption storage order = orders[registeredOrderIds[i]];
-            if (order.metadata.status != Status.Matched) {
-                continue;
-            }
 
             bool expiryIsValid = (
                 order.metadata.expiryType == ExpiryType.BlockNumber && blockNumber >= order.metadata.expiry

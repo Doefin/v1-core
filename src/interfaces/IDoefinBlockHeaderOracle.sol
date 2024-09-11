@@ -31,22 +31,10 @@ interface IDoefinBlockHeaderOracle {
         uint32 nonce;
     }
 
-    /**
-     * @dev
-     * @param tipHash The hash of the chain tip
-     * @param blockHeight The block height of the tip
-     */
-    struct ChainTip {
-        bytes32 tipHash;
-        uint256 blockHeight;
-    }
-
     // Events
-    event BlockReorged(bytes32 indexed merkleRootHash);
-    event BlockSubmitted(bytes32 indexed merkleRootHash, uint32 indexed timestamp);
-    event BlockBatchSubmitted(
-        bytes32 indexed initialMerkleRootHash, bytes32 indexed finalMerkleRootHash, uint256 indexed totalBlocks
-    );
+    event BlockReorged(bytes32 merkleRootHash);
+    event BlockSubmitted(bytes32 blockHash, uint32 timestamp);
+    event BlockBatchSubmitted(bytes32 initialMerkleRootHash, bytes32 finalMerkleRootHash, uint256 totalBlocks);
 
     // Interface methods
     /**

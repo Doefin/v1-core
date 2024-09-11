@@ -102,8 +102,5 @@ library Errors {
     error BlockHeaderOracle_CannotFindForkPoint();
 
     /// @notice Thrown when a reorg did not occur
-    error BlockHeaderOracle_ReorgNotDetected();
-
-    /// @notice Thrown when a reorg did not occur
     error BlockHeaderOracle_NewChainNotLonger();
 }
