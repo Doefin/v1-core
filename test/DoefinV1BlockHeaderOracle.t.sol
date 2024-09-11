@@ -97,7 +97,6 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
         public
     {
         uint256 expiry = blockHeaderOracle.currentBlockHeight() + 1;
-        console.log("expiry block number: ", expiry);
         vm.assume(strike != 0);
         vm.assume(premium >= minCollateralAmount && premium <= depositBound);
         vm.assume(counterparty == users.broker || counterparty == users.rick || counterparty == users.james);
