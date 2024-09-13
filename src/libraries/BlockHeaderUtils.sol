@@ -22,8 +22,7 @@ library BlockHeaderUtils {
         returns (bool)
     {
         uint256 target = calculateDifficultyTarget(currentBlockHeader);
-        bytes32 hash = calculateBlockHash(nextBlockHeader);
-
+        bytes32 hash = nextBlockHeader.blockHash;
         return uint256(hash) < target;
     }
 
@@ -153,6 +152,6 @@ library BlockHeaderUtils {
 
     function median(uint256[11] memory array) internal pure returns (uint256) {
         sort(array, 0, 11);
-        return array[5]; //(array[4] + array[5]) / 2;
+        return array[5];
     }
 }

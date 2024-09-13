@@ -29,12 +29,13 @@ interface IDoefinBlockHeaderOracle {
         uint32 timestamp;
         uint32 nBits;
         uint32 nonce;
+        bytes32 blockHash;
+        uint256 blockNumber;
     }
 
     // Events
     event BlockReorged(bytes32 merkleRootHash);
     event BlockSubmitted(bytes32 blockHash, uint32 timestamp);
-    event BlockBatchSubmitted(bytes32 initialMerkleRootHash, bytes32 finalMerkleRootHash, uint256 totalBlocks);
 
     // Interface methods
     /**

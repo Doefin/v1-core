@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
+import "forge-std/Console.sol";
 import { Errors } from "./libraries/Errors.sol";
 import { IDoefinConfig } from "./interfaces/IDoefinConfig.sol";
 import { BlockHeaderUtils } from "./libraries/BlockHeaderUtils.sol";
@@ -60,32 +61,38 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
         address _config
     ) {
         for (uint256 i = 0; i < NUM_OF_BLOCK_HEADERS; ++i) {
-            blockHeaders[i] = initialBlockHistory[i];
+            BlockHeader memory blockHeader = initialBlockHistory[i];
+            blockHeader.blockHash = BlockHeaderUtils.calculateBlockHash(blockHeader);
+            blockHeader.blockNumber = initialBlockHeight + i;
+
+            blockHeaders[i] = blockHeader;
         }
 
         nextBlockIndex = 0;
-        currentBlockHeight = initialBlockHeight;
+        currentBlockHeight = initialBlockHeight + NUM_OF_BLOCK_HEADERS - 1;
         config = IDoefinConfig(_config);
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
-    function submitNextBlock(BlockHeader calldata newBlockHeader) external {
+    function submitNextBlock(BlockHeader calldata _newBlockHeader) external {
+        BlockHeader memory newBlockHeader = _newBlockHeader;
+        newBlockHeader.blockHash = BlockHeaderUtils.calculateBlockHash(newBlockHeader);
+        newBlockHeader.blockNumber = ++currentBlockHeight;
+
         BlockHeader memory currentBlockHeader = getLatestBlockHeader();
         _verifyBlockHeader(currentBlockHeader, newBlockHeader);
 
         blockHeaders[nextBlockIndex] = newBlockHeader;
         nextBlockIndex = (nextBlockIndex + 1) % NUM_OF_BLOCK_HEADERS;
-        ++currentBlockHeight;
 
-        bytes32 newBlockHash = BlockHeaderUtils.calculateBlockHash(newBlockHeader);
-        emit BlockSubmitted(newBlockHash, newBlockHeader.timestamp);
+        emit BlockSubmitted(newBlockHeader.blockHash, newBlockHeader.timestamp);
 
         _settleOrder();
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
     function submitBatchBlocks(BlockHeader[] calldata newBlockHeaders) external {
-        BlockHeader memory latestBlockHeader = newBlockHeaders[newBlockHeaders.length - 1];
+        BlockHeader memory latestBlockHeaderInBatch = newBlockHeaders[newBlockHeaders.length - 1];
         uint256 forkHeight = _findForkPoint(newBlockHeaders[0]);
 
         if (forkHeight + newBlockHeaders.length <= currentBlockHeight) {
@@ -93,7 +100,7 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
         }
 
         if (forkHeight < currentBlockHeight) {
-            emit BlockReorged(latestBlockHeader.merkleRootHash);
+            emit BlockReorged(latestBlockHeaderInBatch.merkleRootHash);
         }
 
         BlockHeader memory prevBlockHeader = forkHeight == currentBlockHeight
@@ -104,10 +111,6 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
         currentBlockHeight = forkHeight;
 
         _applyChain(prevBlockHeader, newBlockHeaders);
-
-        emit BlockBatchSubmitted(
-            newBlockHeaders[0].merkleRootHash, latestBlockHeader.merkleRootHash, newBlockHeaders.length
-        );
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
@@ -153,12 +156,18 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
      */
     function _applyChain(BlockHeader memory prevBlockHeader, BlockHeader[] memory newBlockHeaders) internal {
         for (uint256 i = 0; i < newBlockHeaders.length; i++) {
-            _verifyBlockHeader(prevBlockHeader, newBlockHeaders[i]);
-            prevBlockHeader = newBlockHeaders[i];
+            BlockHeader memory newBlockHeader = newBlockHeaders[i];
+            newBlockHeader.blockHash = BlockHeaderUtils.calculateBlockHash(newBlockHeader);
+            newBlockHeader.blockNumber = ++currentBlockHeight;
 
-            blockHeaders[nextBlockIndex] = newBlockHeaders[i];
+            _verifyBlockHeader(prevBlockHeader, newBlockHeader);
+            prevBlockHeader = newBlockHeader;
+
+            blockHeaders[nextBlockIndex] = newBlockHeader;
             nextBlockIndex = (nextBlockIndex + 1) % NUM_OF_BLOCK_HEADERS;
-            ++currentBlockHeight;
+
+            emit BlockSubmitted(newBlockHeader.blockHash, newBlockHeader.timestamp);
+            _settleOrder();
         }
     }
 
@@ -170,8 +179,7 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
     function _findForkPoint(BlockHeader calldata newBlockHeader) internal view returns (uint256) {
         for (uint256 i = 0; i < NUM_OF_BLOCK_HEADERS; i++) {
             uint256 index = (nextBlockIndex + NUM_OF_BLOCK_HEADERS - i - 1) % NUM_OF_BLOCK_HEADERS;
-            bytes32 blockHash = BlockHeaderUtils.calculateBlockHash(blockHeaders[index]);
-            if (blockHash == newBlockHeader.prevBlockHash) {
+            if (blockHeaders[index].blockHash == newBlockHeader.prevBlockHash) {
                 return currentBlockHeight - i;
             }
         }
@@ -183,7 +191,7 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
     /// @param prevBlockHeader The previous block header
     /// @param newBlockHeader The new block header to verify
     function _verifyBlockHeader(BlockHeader memory prevBlockHeader, BlockHeader memory newBlockHeader) internal view {
-        if (newBlockHeader.prevBlockHash != BlockHeaderUtils.calculateBlockHash(prevBlockHeader)) {
+        if (newBlockHeader.prevBlockHash != prevBlockHeader.blockHash) {
             revert Errors.BlockHeaderOracle_PrevBlockHashMismatch();
         }
 

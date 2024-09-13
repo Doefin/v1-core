@@ -41,7 +41,9 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
             merkleRootHash: 0xe2ac709ad52a66c2109c75924f82e55491f67f72642eb8eab0c8c189a7bed28b,
             timestamp: 1_712_940_152,
             nBits: 0x17034219,
-            nonce: 3_138_544_259
+            nonce: 3_138_544_259,
+            blockHash: 0,
+            blockNumber: 0
         });
 
         vm.expectRevert(abi.encodeWithSelector(Errors.BlockHeaderOracle_PrevBlockHashMismatch.selector));
@@ -55,7 +57,9 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
             merkleRootHash: 0xbb94b9f29d86433922fce640b9e95605dd29661978a9040e739ff47553595d3b,
             timestamp: 1_712_940_028,
             nBits: 0x17034219,
-            nonce: 1_539_690_831
+            nonce: 1_539_690_831,
+            blockHash: 0,
+            blockNumber: 0
         });
         uint256 medianTimestamp = blockHeaderOracle.medianBlockTime();
         blockHeader.timestamp = uint32(medianTimestamp / 2);
@@ -71,7 +75,9 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
             merkleRootHash: 0xbb94b9f29d86433922fce640b9e95605dd29661978a9040e739ff47553595d3b,
             timestamp: 1_712_940_028,
             nBits: 0x17034219,
-            nonce: 1_539_690_832
+            nonce: 1_539_690_832,
+            blockHash: 0,
+            blockNumber: 0
         });
         uint256 medianTimestamp = blockHeaderOracle.medianBlockTime();
         vm.expectRevert(abi.encodeWithSelector(Errors.BlockHeaderOracle_InvalidBlockHash.selector));
@@ -150,11 +156,13 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
             batchBlocks[i] = getNextBlocks()[i];
         }
 
-        vm.expectEmit(true, true, true, true);
-        emit IDoefinBlockHeaderOracle.BlockBatchSubmitted(
-            batchBlocks[0].merkleRootHash, batchBlocks[4].merkleRootHash, 5
-        );
-
+        for (uint256 i = 0; i < 5; i++) {
+            batchBlocks[i] = getNextBlocks()[i];
+            vm.expectEmit();
+            emit IDoefinBlockHeaderOracle.BlockSubmitted(
+                BlockHeaderUtils.calculateBlockHash(batchBlocks[i]), batchBlocks[i].timestamp
+            );
+        }
         blockHeaderOracle.submitBatchBlocks(batchBlocks);
 
         assertEq(blockHeaderOracle.currentBlockHeight(), initialBlockHeight + 5);
@@ -201,7 +209,9 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
             merkleRootHash: bytes32(uint256(1)),
             timestamp: getNextBlocks()[2].timestamp + 600,
             nBits: 0x1701ffff,
-            nonce: 0
+            nonce: 0,
+            blockHash: 0,
+            blockNumber: 0
         });
         newChain[2] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x20000000,
@@ -209,7 +219,9 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
             merkleRootHash: bytes32(uint256(2)),
             timestamp: getNextBlocks()[2].timestamp + 1200,
             nBits: 0x1701ffff,
-            nonce: 0
+            nonce: 0,
+            blockHash: 0,
+            blockNumber: 0
         });
 
         vm.expectRevert(abi.encodeWithSelector(Errors.BlockHeaderOracle_NewChainNotLonger.selector));
@@ -229,7 +241,9 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
             merkleRootHash: bytes32(uint256(1)),
             timestamp: uint32(block.timestamp),
             nBits: 0x1703ffff,
-            nonce: 0
+            nonce: 0,
+            blockHash: 0,
+            blockNumber: 0
         });
         newChain[1] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x20000000,
@@ -237,7 +251,9 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
             merkleRootHash: bytes32(uint256(2)),
             timestamp: uint32(block.timestamp) + 600,
             nBits: 0x1703ffff,
-            nonce: 0
+            nonce: 0,
+            blockHash: 0,
+            blockNumber: 0
         });
         newChain[2] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x20000000,
@@ -245,7 +261,9 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
             merkleRootHash: bytes32(uint256(3)),
             timestamp: uint32(block.timestamp) + 1200,
             nBits: 0x1703ffff,
-            nonce: 0
+            nonce: 0,
+            blockHash: 0,
+            blockNumber: 0
         });
 
         vm.expectRevert(abi.encodeWithSelector(Errors.BlockHeaderOracle_CannotFindForkPoint.selector));
