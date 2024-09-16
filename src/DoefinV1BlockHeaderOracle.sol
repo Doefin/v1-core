@@ -140,12 +140,13 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
             revert Errors.ZeroAddress();
         }
 
-        uint256 settlementIndex = (nextBlockIndex + NUM_OF_BLOCK_HEADERS - SETTLEMENT_DELAY) % NUM_OF_BLOCK_HEADERS;
+        uint256 settlementIndex = (nextBlockIndex + NUM_OF_BLOCK_HEADERS - SETTLEMENT_DELAY - 1) % NUM_OF_BLOCK_HEADERS;
         BlockHeader memory settlementBlock = blockHeaders[settlementIndex];
-        uint256 blockNumber = currentBlockHeight - SETTLEMENT_DELAY + 1;
 
         IDoefinV1OrderBook(orderBook).settleOrder(
-            blockNumber, settlementBlock.timestamp, BlockHeaderUtils.calculateDifficultyTarget(settlementBlock)
+            settlementBlock.blockNumber,
+            settlementBlock.timestamp,
+            BlockHeaderUtils.calculateDifficultyTarget(settlementBlock)
         );
     }
 
