@@ -48,7 +48,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0xc44aa6dd914d3363dc92f3e83daac0f08c0844f1b5ca2f5156ccf0fb44d27f01,
             timestamp: 1_712_927_715,
             nBits: 0x17034219,
-            nonce: 3_666_636_075
+            nonce: 3_666_636_075,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[1] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x23f4c000,
@@ -56,7 +58,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0x7d87da258879151913787a2e8c1717e5c676b0fe5a9db0c164c3ad91eec25a15,
             timestamp: 1_712_928_324,
             nBits: 0x17034219,
-            nonce: 2_001_261_904
+            nonce: 2_001_261_904,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[2] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x26f34000,
@@ -64,7 +68,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0xf9151897084c724b7536576d8cffd4d7ae12dda505b62b59f03c8fc9cc58d8d3,
             timestamp: 1_712_928_393,
             nBits: 0x17034219,
-            nonce: 2_744_059_218
+            nonce: 2_744_059_218,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[3] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x2d130000,
@@ -72,7 +78,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0x7cb340f6f9e22f1e4e9efb5a0bb94026bc95264581b638aacc203977a86be4e5,
             timestamp: 1_712_928_483,
             nBits: 0x17034219,
-            nonce: 232_290_002
+            nonce: 232_290_002,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[4] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x2e1a4000,
@@ -80,7 +88,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0x2fd22167d58af841377b691781db049cdd1134e363fd7462020b1103493bbe18,
             timestamp: 1_712_930_330,
             nBits: 0x17034219,
-            nonce: 2_975_049_986
+            nonce: 2_975_049_986,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[5] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x30b38000,
@@ -88,7 +98,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0xce8cedeb8acd36ceb570e8198a40a8e2095645c62afca98c8786416c67239760,
             timestamp: 1_712_930_844,
             nBits: 0x17034219,
-            nonce: 4_167_839_757
+            nonce: 4_167_839_757,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[6] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x2ee76000,
@@ -96,7 +108,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0x313f6f906085540f2916fc54fbebccab184b4accba25772b1fef13a6ac37e14c,
             timestamp: 1_712_931_332,
             nBits: 0x17034219,
-            nonce: 2_477_280_636
+            nonce: 2_477_280_636,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[7] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x280c2000,
@@ -104,7 +118,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0xe1750eae845642c53024ce3edaae7837a0a8d9dfb635525aa64daecc644a1f0f,
             timestamp: 1_712_931_713,
             nBits: 0x17034219,
-            nonce: 304_578_959
+            nonce: 304_578_959,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[8] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x20800000,
@@ -112,7 +128,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0xef913f9b73c3d61b50ea8725db7d8b8c6bf58acc53b4ef301f2afa64b8396f93,
             timestamp: 1_712_932_190,
             nBits: 0x17034219,
-            nonce: 1_006_604_870
+            nonce: 1_006_604_870,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[9] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x33b40000,
@@ -120,7 +138,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0x7873ec569b26d46bf030393822f1f8d5594326faea7581ac0f850c81b0713414,
             timestamp: 1_712_932_769,
             nBits: 0x17034219,
-            nonce: 1_809_362_959
+            nonce: 1_809_362_959,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[10] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x200bc000,
@@ -128,7 +148,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0x701e180e1a404bfb22d957e807fde81faceb1b77529f5e251fc702ac28c830e4,
             timestamp: 1_712_934_076,
             nBits: 0x17034219,
-            nonce: 2_693_788_053
+            nonce: 2_693_788_053,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[11] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x2af58000,
@@ -136,7 +158,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0xb899b04ec1e021726b2ba9bd48df189e64fa0b5a7e5fcc36532b4d62dad5b807,
             timestamp: 1_712_934_556,
             nBits: 0x17034219,
-            nonce: 686_364_004
+            nonce: 686_364_004,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[12] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x36000000,
@@ -144,7 +168,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0x2196156490ea5d0ee09a29a31501211f3f36057b97f45bcb3b78eee166060f31,
             timestamp: 1_712_935_895,
             nBits: 0x17034219,
-            nonce: 2_593_830_908
+            nonce: 2_593_830_908,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[13] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x2d542000,
@@ -152,7 +178,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0xdf308c7a701d0d2dad79c19e55f13328657cc1cd7887247fec9d637d892335fe,
             timestamp: 1_712_937_894,
             nBits: 0x17034219,
-            nonce: 240_595_568
+            nonce: 240_595_568,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[14] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x20800000,
@@ -160,7 +188,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0xfd9b761a2482ebe81592a5d0c3fc5c4101d6cb77ebb8ba0239a6aad6dc573e7e,
             timestamp: 1_712_939_811,
             nBits: 0x17034219,
-            nonce: 1_203_082_080
+            nonce: 1_203_082_080,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[15] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x20002000,
@@ -168,7 +198,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0x35207066c7854bcf2620029b849b5713730c856939e2cb168047abc971b23ddb,
             timestamp: 1_712_939_989,
             nBits: 0x17034219,
-            nonce: 2_267_009_901
+            nonce: 2_267_009_901,
+            blockHash: 0,
+            blockNumber: 0
         });
         blockHeaders[16] = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x21e02000,
@@ -176,7 +208,9 @@ contract DeployDeterministicCore is BaseScript {
             merkleRootHash: 0x0c0d616463b1b888ff49c72b65d46a6ba6ee0c9d2c7b0b8d75d64a9364f7c85f,
             timestamp: 1_712_940_014,
             nBits: 0x17034219,
-            nonce: 305_767_976
+            nonce: 305_767_976,
+            blockHash: 0,
+            blockNumber: 0
         });
         return blockHeaders;
     }

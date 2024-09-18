@@ -212,6 +212,13 @@ interface IDoefinV1OrderBook {
     /// @param id The order id
     event OrderDeleted(uint256 indexed id);
 
+    /// @notice Emitted when an order is settled
+    /// @param orderId The order id
+    /// @param blockNumber The block number at which the order was settled
+    /// @param timestamp The timestamp at which the order was settled
+    /// @param difficulty  The difficulty at which the order was settled
+    event OrderSettled(uint256 orderId, uint256 blockNumber, uint256 timestamp, uint256 difficulty);
+
     // Interface methods
 
     function createOrder(CreateOrderInput calldata order) external returns (uint256);

@@ -208,10 +208,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
     function settleOrder(uint256 blockNumber, uint256 timestamp, uint256 difficulty) public onlyBlockHeaderOracle {
         uint256 len = registeredOrderIds.length;
         for (uint256 i = 0; i < len; i++) {
-            BinaryOption storage order = orders[registeredOrderIds[i]];
-            if (order.metadata.status != Status.Matched) {
-                continue;
-            }
+            uint256 orderId = registeredOrderIds[i];
+            BinaryOption storage order = orders[orderId];
 
             bool expiryIsValid = (
                 order.metadata.expiryType == ExpiryType.BlockNumber && blockNumber >= order.metadata.expiry
@@ -224,6 +222,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
                 registeredOrderIds[i] = registeredOrderIds[len - 1];
                 registeredOrderIds.pop();
                 len--;
+
+                emit OrderSettled(orderId, blockNumber, timestamp, difficulty);
             }
         }
     }

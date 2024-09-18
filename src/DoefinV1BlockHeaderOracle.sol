@@ -24,7 +24,7 @@ import { IDoefinBlockHeaderOracle } from "./interfaces/IDoefinBlockHeaderOracle.
  * 2. Verify the Previous Block Hash: Check that the hashPrevBlock field matches the hash of the previous block.
  *    This ensures the blockchain is properly linked and ordered.
  * 3. Validate the Timestamp: Check that the block’s timestamp is greater than the median of the previous 11 blocks.
- * 4. Validate the Proof of Work: Calculate the hash of the block header using the double SHA-256 hashing algorithm
+ * 4. Validate the Proof of work: Calculate the hash of the block header using the double SHA-256 hashing algorithm
  *    and ensure it is less than the target specified by nBits.
  * 5. Verify the Difficulty Target (nBits): Ensure that the difficulty target (nBits) of the block matches the expected
  *    value. Difficulty is adjusted every 2016 blocks to maintain the 10-minute block interval.
@@ -42,6 +42,9 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
     /// @notice Track the index of the next block in the ring buffer
     uint256 public nextBlockIndex;
 
+    /// @notice The number of blocks to delay before settlement
+    uint256 public constant SETTLEMENT_DELAY = 6;
+
     /// @notice The total number of timestamps to be stored
     uint256 public constant NUM_OF_TIMESTAMPS = 11;
 
@@ -57,46 +60,65 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
         address _config
     ) {
         for (uint256 i = 0; i < NUM_OF_BLOCK_HEADERS; ++i) {
-            blockHeaders[i] = initialBlockHistory[i];
+            BlockHeader memory blockHeader = initialBlockHistory[i];
+            blockHeader.blockHash = BlockHeaderUtils.calculateBlockHash(blockHeader);
+            blockHeader.blockNumber = initialBlockHeight + i;
+
+            blockHeaders[i] = blockHeader;
         }
 
         nextBlockIndex = 0;
-        currentBlockHeight = initialBlockHeight;
+        currentBlockHeight = initialBlockHeight + NUM_OF_BLOCK_HEADERS - 1;
         config = IDoefinConfig(_config);
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
-    function submitNextBlock(BlockHeader calldata newBlockHeader) external {
+    function submitNextBlock(BlockHeader calldata _newBlockHeader) external {
+        BlockHeader memory newBlockHeader = _newBlockHeader;
+        newBlockHeader.blockHash = BlockHeaderUtils.calculateBlockHash(newBlockHeader);
+        newBlockHeader.blockNumber = ++currentBlockHeight;
+
         BlockHeader memory currentBlockHeader = getLatestBlockHeader();
-        if (newBlockHeader.prevBlockHash != BlockHeaderUtils.calculateBlockHash(currentBlockHeader)) {
-            revert Errors.BlockHeaderOracle_PrevBlockHashMismatch();
-        }
-
-        if (newBlockHeader.timestamp < medianBlockTime()) {
-            revert Errors.BlockHeaderOracle_InvalidTimestamp();
-        }
-
-        if (!BlockHeaderUtils.isValidBlockHeaderHash(currentBlockHeader, newBlockHeader)) {
-            revert Errors.BlockHeaderOracle_InvalidBlockHash();
-        }
+        _verifyBlockHeader(currentBlockHeader, newBlockHeader);
 
         blockHeaders[nextBlockIndex] = newBlockHeader;
         nextBlockIndex = (nextBlockIndex + 1) % NUM_OF_BLOCK_HEADERS;
-        ++currentBlockHeight;
 
-        _settleOrder(
-            currentBlockHeight, newBlockHeader.timestamp, BlockHeaderUtils.calculateDifficultyTarget(newBlockHeader)
-        );
+        emit BlockSubmitted(newBlockHeader.blockHash, newBlockHeader.timestamp);
 
-        emit BlockSubmitted(newBlockHeader.merkleRootHash, newBlockHeader.timestamp);
+        _settleOrder();
+    }
+
+    /// @inheritdoc IDoefinBlockHeaderOracle
+    function submitBatchBlocks(BlockHeader[] calldata newBlockHeaders) external {
+        BlockHeader memory latestBlockHeaderInBatch = newBlockHeaders[newBlockHeaders.length - 1];
+        uint256 forkHeight = _findForkPoint(newBlockHeaders[0]);
+
+        if (forkHeight + newBlockHeaders.length <= currentBlockHeight) {
+            revert Errors.BlockHeaderOracle_NewChainNotLonger();
+        }
+
+        if (forkHeight < currentBlockHeight) {
+            emit BlockReorged(latestBlockHeaderInBatch.merkleRootHash);
+        }
+
+        BlockHeader memory prevBlockHeader = forkHeight == currentBlockHeight
+            ? getLatestBlockHeader()
+            : blockHeaders[(nextBlockIndex + forkHeight - currentBlockHeight - 1) % NUM_OF_BLOCK_HEADERS];
+
+        nextBlockIndex = (nextBlockIndex + forkHeight - currentBlockHeight) % NUM_OF_BLOCK_HEADERS;
+        currentBlockHeight = forkHeight;
+
+        _applyChain(prevBlockHeader, newBlockHeaders);
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
     function medianBlockTime() public view returns (uint256) {
         uint256[NUM_OF_TIMESTAMPS] memory timestamps;
+        uint256 startIndex = (nextBlockIndex + NUM_OF_BLOCK_HEADERS - 1) % NUM_OF_BLOCK_HEADERS;
 
         for (uint256 i = 0; i < NUM_OF_TIMESTAMPS; ++i) {
-            uint256 j = (nextBlockIndex + 6) % NUM_OF_BLOCK_HEADERS;
+            uint256 j = (startIndex + NUM_OF_BLOCK_HEADERS - i) % NUM_OF_BLOCK_HEADERS;
             timestamps[i] = blockHeaders[j].timestamp;
         }
 
@@ -111,15 +133,74 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
 
     /**
      * @dev Settle orders in the order book for every new bloc number
-     * @param blockNumber The latest block number to be submitted
-     * @param timestamp The timestamp of the new bloc header
-     * @param difficulty The difficulty of the
      */
-    function _settleOrder(uint256 blockNumber, uint256 timestamp, uint256 difficulty) internal {
+    function _settleOrder() internal {
         address orderBook = config.getOrderBook();
         if (orderBook == address(0)) {
             revert Errors.ZeroAddress();
         }
-        IDoefinV1OrderBook(orderBook).settleOrder(blockNumber, timestamp, difficulty);
+
+        uint256 settlementIndex = (nextBlockIndex + NUM_OF_BLOCK_HEADERS - SETTLEMENT_DELAY - 1) % NUM_OF_BLOCK_HEADERS;
+        BlockHeader memory settlementBlock = blockHeaders[settlementIndex];
+
+        IDoefinV1OrderBook(orderBook).settleOrder(
+            settlementBlock.blockNumber,
+            settlementBlock.timestamp,
+            BlockHeaderUtils.calculateDifficultyTarget(settlementBlock)
+        );
+    }
+
+    /**
+     * @dev Apply a series of new block headers to the chain
+     * @param newBlockHeaders The block headers to apply
+     */
+    function _applyChain(BlockHeader memory prevBlockHeader, BlockHeader[] memory newBlockHeaders) internal {
+        for (uint256 i = 0; i < newBlockHeaders.length; i++) {
+            BlockHeader memory newBlockHeader = newBlockHeaders[i];
+            newBlockHeader.blockHash = BlockHeaderUtils.calculateBlockHash(newBlockHeader);
+            newBlockHeader.blockNumber = ++currentBlockHeight;
+
+            _verifyBlockHeader(prevBlockHeader, newBlockHeader);
+            prevBlockHeader = newBlockHeader;
+
+            blockHeaders[nextBlockIndex] = newBlockHeader;
+            nextBlockIndex = (nextBlockIndex + 1) % NUM_OF_BLOCK_HEADERS;
+
+            emit BlockSubmitted(newBlockHeader.blockHash, newBlockHeader.timestamp);
+            _settleOrder();
+        }
+    }
+
+    /**
+     * @dev Find the fork point where the new chain diverges from the current chain
+     * @param newBlockHeader The first header of the new chain
+     * @return The height of the fork point
+     */
+    function _findForkPoint(BlockHeader calldata newBlockHeader) internal view returns (uint256) {
+        for (uint256 i = 0; i < NUM_OF_BLOCK_HEADERS; i++) {
+            uint256 index = (nextBlockIndex + NUM_OF_BLOCK_HEADERS - i - 1) % NUM_OF_BLOCK_HEADERS;
+            if (blockHeaders[index].blockHash == newBlockHeader.prevBlockHash) {
+                return currentBlockHeight - i;
+            }
+        }
+
+        revert Errors.BlockHeaderOracle_CannotFindForkPoint();
+    }
+
+    /// @notice Verifies a single block header against consensus rules
+    /// @param prevBlockHeader The previous block header
+    /// @param newBlockHeader The new block header to verify
+    function _verifyBlockHeader(BlockHeader memory prevBlockHeader, BlockHeader memory newBlockHeader) internal view {
+        if (newBlockHeader.prevBlockHash != prevBlockHeader.blockHash) {
+            revert Errors.BlockHeaderOracle_PrevBlockHashMismatch();
+        }
+
+        if (newBlockHeader.timestamp < medianBlockTime()) {
+            revert Errors.BlockHeaderOracle_InvalidTimestamp();
+        }
+
+        if (!BlockHeaderUtils.isValidBlockHeaderHash(prevBlockHeader, newBlockHeader)) {
+            revert Errors.BlockHeaderOracle_InvalidBlockHash();
+        }
     }
 }

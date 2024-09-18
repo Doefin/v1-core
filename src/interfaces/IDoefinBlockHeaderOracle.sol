@@ -29,10 +29,13 @@ interface IDoefinBlockHeaderOracle {
         uint32 timestamp;
         uint32 nBits;
         uint32 nonce;
+        bytes32 blockHash;
+        uint256 blockNumber;
     }
 
     // Events
-    event BlockSubmitted(bytes32 indexed merkleRootHash, uint32 indexed timestamp);
+    event BlockReorged(bytes32 merkleRootHash);
+    event BlockSubmitted(bytes32 blockHash, uint32 timestamp);
 
     // Interface methods
     /**
@@ -41,6 +44,12 @@ interface IDoefinBlockHeaderOracle {
      * @param newBlockHeader The newest block header to the added to the head of the ring buffer
      */
     function submitNextBlock(BlockHeader calldata newBlockHeader) external;
+
+    /**
+     * @notice Allows anyone to submit a block header to update the canonical chain
+     * @param newBlockHeaders The list of new block headers to be added to the canonical chain
+     */
+    function submitBatchBlocks(BlockHeader[] calldata newBlockHeaders) external;
 
     /**
      * @notice Get the median timestamp from the sorted timestamp list

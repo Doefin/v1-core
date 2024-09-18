@@ -97,4 +97,10 @@ library Errors {
 
     /// @notice Thrown when the block hash is invalid
     error BlockHeaderOracle_InvalidBlockHash();
+
+    /// @notice Thrown when the fork point cannot be found
+    error BlockHeaderOracle_CannotFindForkPoint();
+
+    /// @notice Thrown when a reorg did not occur
+    error BlockHeaderOracle_NewChainNotLonger();
 }
