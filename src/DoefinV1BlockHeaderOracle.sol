@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.19;
 
 import { Errors } from "./libraries/Errors.sol";
 import { IDoefinConfig } from "./interfaces/IDoefinConfig.sol";
@@ -167,6 +167,10 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
             nextBlockIndex = (nextBlockIndex + 1) % NUM_OF_BLOCK_HEADERS;
 
             emit BlockSubmitted(newBlockHeader.blockHash, newBlockHeader.timestamp);
+            //_settleOrder();
+        }
+
+        for (uint256 i = 0; i < newBlockHeaders.length; i++) {
             _settleOrder();
         }
     }
