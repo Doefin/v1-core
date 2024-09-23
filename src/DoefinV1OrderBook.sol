@@ -14,9 +14,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
     /// @notice Doefin Config
     IDoefinConfig public immutable config;
 
-    /// @notice The minimum collateral token amount required for an order to be valid
-    uint256 public immutable minCollateralTokenAmount;
-
     /// @notice The block header oracle address
     address public immutable blockHeaderOracle;
 
@@ -35,10 +32,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
     /// @notice List of orderIds to be settled
     uint256[] public registeredOrderIds;
 
-    modifier onlyOptionsManager() {
-        require(_msgSender() == blockHeaderOracle, "Can only be called by options manager");
-        _;
-    }
 
     modifier onlyBlockHeaderOracle() {
         require(_msgSender() == blockHeaderOracle, "Caller is not block header oracle");
