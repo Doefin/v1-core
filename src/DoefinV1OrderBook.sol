@@ -14,6 +14,9 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
     /// @notice Doefin Config
     IDoefinConfig public immutable config;
 
+    /// @notice The minimum collateral token amount required for an order to be valid
+    uint256 public immutable minCollateralTokenAmount;
+
     /// @notice The block header oracle address
     address public immutable blockHeaderOracle;
 
@@ -31,6 +34,11 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
 
     /// @notice List of orderIds to be settled
     uint256[] public registeredOrderIds;
+
+    modifier onlyOptionsManager() {
+        require(_msgSender() == blockHeaderOracle, "Can only be called by options manager");
+        _;
+    }
 
     modifier onlyBlockHeaderOracle() {
         require(_msgSender() == blockHeaderOracle, "Caller is not block header oracle");
@@ -67,6 +75,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
             createOrderInput.strike,
             createOrderInput.premium,
             createOrderInput.notional,
+            createOrderInput.deadline,
             createOrderInput.expiry,
             createOrderInput.expiryType,
             createOrderInput.position,
@@ -135,6 +144,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
             order.strike,
             order.premium,
             order.notional,
+            block.timestamp,
             order.expiry,
             ExpiryType(order.expiryType),
             Position(order.position),
@@ -394,6 +404,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         address collateralToken,
         uint256 strike,
         uint256 notional,
+        uint256 deadline,
         uint256 expiry,
         ExpiryType expiryType,
         address[] calldata allowed
@@ -412,7 +423,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
             payOut: notional - (notional / 100),
             expiry: expiry,
             expiryType: expiryType,
-            deadline: block.timestamp,
+            deadline: deadline,
             allowed: allowed
         });
     }
@@ -453,6 +464,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         uint256 strike,
         uint256 premium,
         uint256 notional,
+        uint256 deadline,
         uint256 expiry,
         ExpiryType expiryType,
         Position position,
@@ -466,7 +478,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         newBinaryOption = orders[newOrderId];
         newBinaryOption.premiums = _initializePremiums(premium, notional);
         newBinaryOption.positions = _initializePositions(position);
-        newBinaryOption.metadata = _initializeMetadata(collateralToken, strike, notional, expiry, expiryType, allowed);
+        newBinaryOption.metadata =
+            _initializeMetadata(collateralToken, strike, notional, deadline, expiry, expiryType, allowed);
     }
 
     function _handleCollateralTransfer(address collateralToken, address from, uint256 amount) internal {
