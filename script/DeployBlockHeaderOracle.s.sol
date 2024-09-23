@@ -6,7 +6,6 @@ import { DoefinV1Config } from "../src/DoefinV1Config.sol";
 import { DoefinV1BlockHeaderOracle } from "../src/DoefinV1BlockHeaderOracle.sol";
 import { IDoefinBlockHeaderOracle } from "../src/interfaces/IDoefinBlockHeaderOracle.sol";
 
-
 /// @dev Reverts if any contract has already been deployed.
 contract DeployBlockHeaderOracle is BaseScript {
     uint256 public initialBlockHeight;

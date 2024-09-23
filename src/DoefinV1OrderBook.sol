@@ -32,7 +32,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
     /// @notice List of orderIds to be settled
     uint256[] public registeredOrderIds;
 
-
     modifier onlyBlockHeaderOracle() {
         require(_msgSender() == blockHeaderOracle, "Caller is not block header oracle");
         _;
