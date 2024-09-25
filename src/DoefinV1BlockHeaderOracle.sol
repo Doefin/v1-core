@@ -167,7 +167,6 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
             nextBlockIndex = (nextBlockIndex + 1) % NUM_OF_BLOCK_HEADERS;
 
             emit BlockSubmitted(newBlockHeader.blockHash, newBlockHeader.timestamp);
-            //_settleOrder();
         }
 
         for (uint256 i = 0; i < newBlockHeaders.length; i++) {
