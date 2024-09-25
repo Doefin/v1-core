@@ -203,8 +203,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
             }
         }
         emit OrderExercised(orderId, order.metadata.payOut, winner);
-
-        emit OrderDeleted(orderId);
         return orderId;
     }
 
@@ -249,7 +247,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
 
         IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.premiums.makerPremium);
         emit OrderCanceled(orderId);
-        emit OrderDeleted(orderId);
     }
 
     //@@inheritdoc

@@ -954,7 +954,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         }
 
         vm.expectEmit();
-        emit IDoefinV1OrderBook.OrderDeleted(orderId);
         emit IDoefinV1OrderBook.OrderExercised(orderId, order.metadata.payOut, winner);
         orderBook.exerciseOrder(orderId);
     }
@@ -1028,7 +1027,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         }
 
         vm.expectEmit();
-        emit IDoefinV1OrderBook.OrderDeleted(orderId);
         emit IDoefinV1OrderBook.OrderExercised(orderId, orderBook.getOrder(orderId).metadata.payOut, winner);
         orderBook.exerciseOrder(orderId);
     }
