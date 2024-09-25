@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.24;
 
 import { Errors } from "./libraries/Errors.sol";
 import { ERC1155 } from "solady/contracts/tokens/ERC1155.sol";
