@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.19;
+pragma solidity ^0.8.24;
 
 import { IERC20, Base_Test } from "./Base.t.sol";
 import { Test } from "forge-std/Test.sol";
@@ -404,8 +404,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.expectEmit();
         emit IDoefinV1OrderBook.NotionalIncreased(orderId, updateParams.notional);
         vm.expectEmit();
-        emit IDoefinV1OrderBook.PremiumIncreased(orderId, updateParams.premium);
-        vm.expectEmit();
         emit IDoefinV1OrderBook.OrderPositionUpdated(orderId, updateParams.position);
         vm.expectEmit();
         emit IDoefinV1OrderBook.OrderExpiryUpdated(orderId, updateParams.expiry, updateParams.expiryType);
@@ -413,6 +411,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
         emit IDoefinV1OrderBook.OrderAllowedListUpdated(orderId, updateParams.allowed);
         vm.expectEmit();
         emit IDoefinV1OrderBook.OrderStrikeUpdated(orderId, updateParams.strike);
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.PremiumIncreased(orderId, updateParams.premium);
 
         orderBook.updateOrder(orderId, updateParams);
 
@@ -954,7 +954,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         }
 
         vm.expectEmit();
-        emit IDoefinV1OrderBook.OrderDeleted(orderId);
         emit IDoefinV1OrderBook.OrderExercised(orderId, order.metadata.payOut, winner);
         orderBook.exerciseOrder(orderId);
     }
@@ -1028,7 +1027,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         }
 
         vm.expectEmit();
-        emit IDoefinV1OrderBook.OrderDeleted(orderId);
         emit IDoefinV1OrderBook.OrderExercised(orderId, orderBook.getOrder(orderId).metadata.payOut, winner);
         orderBook.exerciseOrder(orderId);
     }

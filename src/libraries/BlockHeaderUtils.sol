@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.8.19;
+pragma solidity ^0.8.24;
 
 import "../interfaces/IDoefinBlockHeaderOracle.sol";
-import "./Errors.sol";
 
 /// @title BlockHeaderUtils
 /// @notice Library that implements utils for bitcoin block header hashing
