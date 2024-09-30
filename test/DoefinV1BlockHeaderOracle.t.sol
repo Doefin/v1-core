@@ -122,9 +122,8 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 

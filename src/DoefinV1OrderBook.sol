@@ -75,7 +75,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
             createOrderInput.strike,
             createOrderInput.premium,
             createOrderInput.notional,
-            createOrderInput.deadline,
             createOrderInput.expiry,
             createOrderInput.expiryType,
             createOrderInput.position,
@@ -94,10 +93,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         BinaryOption storage order = orders[orderId];
         if (order.metadata.status != Status.Pending) {
             revert Errors.OrderBook_OrderMustBePending();
-        }
-
-        if (block.timestamp > order.metadata.deadline) {
-            revert Errors.OrderBook_OrderExpired();
         }
 
         if (order.metadata.taker != address(0)) {
@@ -144,7 +139,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
             order.strike,
             order.premium,
             order.notional,
-            block.timestamp,
             order.expiry,
             ExpiryType(order.expiryType),
             Position(order.position),
@@ -186,7 +180,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         delete orders[orderId];
 
         if (order.metadata.finalStrike > order.metadata.initialStrike) {
-            if (order.positions.makerPosition == Position.Call) {
+            if (order.positions.makerPosition == Position.Above) {
                 winner = order.metadata.maker;
                 IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.metadata.payOut);
             } else {
@@ -194,7 +188,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
                 IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.taker, order.metadata.payOut);
             }
         } else if (order.metadata.finalStrike < order.metadata.initialStrike) {
-            if (order.positions.makerPosition == Position.Put) {
+            if (order.positions.makerPosition == Position.Below) {
                 winner = order.metadata.maker;
                 IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.metadata.payOut);
             } else {
@@ -384,7 +378,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
     function _initializePositions(Position position) internal pure returns (Positions memory) {
         return Positions({
             makerPosition: position,
-            takerPosition: position == Position.Call ? Position.Put : Position.Call
+            takerPosition: position == Position.Above ? Position.Below : Position.Above
         });
     }
 
@@ -401,7 +395,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         address collateralToken,
         uint256 strike,
         uint256 notional,
-        uint256 deadline,
         uint256 expiry,
         ExpiryType expiryType,
         address[] calldata allowed
@@ -420,7 +413,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
             payOut: notional - (notional / 100),
             expiry: expiry,
             expiryType: expiryType,
-            deadline: deadline,
             allowed: allowed
         });
     }
@@ -461,7 +453,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         uint256 strike,
         uint256 premium,
         uint256 notional,
-        uint256 deadline,
         uint256 expiry,
         ExpiryType expiryType,
         Position position,
@@ -476,7 +467,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         newBinaryOption.premiums = _initializePremiums(premium, notional);
         newBinaryOption.positions = _initializePositions(position);
         newBinaryOption.metadata =
-            _initializeMetadata(collateralToken, strike, notional, deadline, expiry, expiryType, allowed);
+            _initializeMetadata(collateralToken, strike, notional, expiry, expiryType, allowed);
     }
 
     function _handleCollateralTransfer(address collateralToken, address from, uint256 amount) internal {

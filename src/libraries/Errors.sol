@@ -38,9 +38,6 @@ library Errors {
     /// @notice Thrown when min strike amount is zero
     error OrderBook_InvalidMinCollateralAmount();
 
-    /// @notice Thrown when the period to match an order has expired
-    error OrderBook_OrderExpired();
-
     /// @notice Thrown when the period to exercise an order has not reached
     error OrderBook_NotWithinExerciseWindow();
 

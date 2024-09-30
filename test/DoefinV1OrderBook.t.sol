@@ -55,9 +55,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -87,9 +86,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -119,9 +117,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -154,9 +151,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -187,9 +183,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -215,7 +210,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
             allowed: allowed
         });
@@ -309,9 +304,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -378,9 +372,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -390,7 +383,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         IDoefinV1OrderBook.UpdateOrder memory updateParams;
         updateParams.notional = notional + (notional / 10); // Increase notional by 10%
         updateParams.premium = premium + (premium / 20); // Increase premium by 5%
-        updateParams.position = IDoefinV1OrderBook.Position.Call;
+        updateParams.position = IDoefinV1OrderBook.Position.Above;
         updateParams.expiry = 10;
         updateParams.expiryType = IDoefinV1OrderBook.ExpiryType.Timestamp;
         address[] memory newAllowed = new address[](2);
@@ -481,9 +474,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -495,7 +487,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         IDoefinV1OrderBook.UpdateOrder memory updateParams;
         updateParams.notional = notional - (notional / 10); // Decrease notional by 10%
         updateParams.premium = premium - (premium / 2); // Decrease premium by 20%
-        updateParams.position = IDoefinV1OrderBook.Position.Call;
+        updateParams.position = IDoefinV1OrderBook.Position.Above;
         updateParams.expiry = 10;
         updateParams.expiryType = IDoefinV1OrderBook.ExpiryType.Timestamp;
         address[] memory newAllowed = new address[](2);
@@ -548,9 +540,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -592,9 +583,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -635,9 +625,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -671,9 +660,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -737,9 +725,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -798,9 +785,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -866,9 +852,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -917,9 +902,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -940,13 +924,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         address winner;
         IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
         if (order.metadata.finalStrike > order.metadata.initialStrike) {
-            if (order.positions.makerPosition == IDoefinV1OrderBook.Position.Call) {
+            if (order.positions.makerPosition == IDoefinV1OrderBook.Position.Above) {
                 winner = order.metadata.maker;
             } else {
                 winner = order.metadata.taker;
             }
         } else if (order.metadata.finalStrike < order.metadata.initialStrike) {
-            if (order.positions.makerPosition == IDoefinV1OrderBook.Position.Put) {
+            if (order.positions.makerPosition == IDoefinV1OrderBook.Position.Below) {
                 winner = order.metadata.maker;
             } else {
                 winner = order.metadata.taker;
@@ -990,9 +974,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
             notional: notional,
             expiry: expiry,
             expiryType: IDoefinV1OrderBook.ExpiryType.Timestamp,
-            position: IDoefinV1OrderBook.Position.Put,
+            position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
-            deadline: 1 days,
             allowed: allowed
         });
 
@@ -1013,13 +996,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         address winner;
         IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
         if (order.metadata.finalStrike > order.metadata.initialStrike) {
-            if (order.positions.makerPosition == IDoefinV1OrderBook.Position.Call) {
+            if (order.positions.makerPosition == IDoefinV1OrderBook.Position.Above) {
                 winner = order.metadata.maker;
             } else {
                 winner = order.metadata.taker;
             }
         } else if (order.metadata.finalStrike < order.metadata.initialStrike) {
-            if (order.positions.makerPosition == IDoefinV1OrderBook.Position.Put) {
+            if (order.positions.makerPosition == IDoefinV1OrderBook.Position.Below) {
                 winner = order.metadata.maker;
             } else {
                 winner = order.metadata.taker;

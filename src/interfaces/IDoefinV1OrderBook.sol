@@ -9,8 +9,8 @@ pragma solidity ^0.8.24;
 interface IDoefinV1OrderBook {
     /// @notice Side of the option.
     enum Position {
-        Call,
-        Put
+        Above,
+        Below
     }
 
     /// @notice The expiry type of the order to be created
@@ -58,7 +58,6 @@ interface IDoefinV1OrderBook {
      * @param finalStrike The strike value of the bitcoin difficulty at settlement
      * @param expiry The block number at which the strike is expected to be evaluated
      * @param expiryType The expiry type of the order to be created {BlockNumber or Timestamp}
-     * @param deadline The deadline before when the option can be matched.
      * @param allowed Addresses that are allowed to buy the issuance. If the array is empty, all addresses are allowed
      *        to buy the issuance.
      */
@@ -72,7 +71,6 @@ interface IDoefinV1OrderBook {
         uint256 payOut;
         uint256 expiry;
         ExpiryType expiryType;
-        uint256 deadline;
         address[] allowed;
     }
 
@@ -119,7 +117,6 @@ interface IDoefinV1OrderBook {
         ExpiryType expiryType;
         Position position;
         address collateralToken;
-        uint256 deadline;
         address[] allowed;
     }
 
