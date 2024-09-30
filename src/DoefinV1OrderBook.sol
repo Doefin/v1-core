@@ -466,8 +466,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         newBinaryOption = orders[newOrderId];
         newBinaryOption.premiums = _initializePremiums(premium, notional);
         newBinaryOption.positions = _initializePositions(position);
-        newBinaryOption.metadata =
-            _initializeMetadata(collateralToken, strike, notional, expiry, expiryType, allowed);
+        newBinaryOption.metadata = _initializeMetadata(collateralToken, strike, notional, expiry, expiryType, allowed);
     }
 
     function _handleCollateralTransfer(address collateralToken, address from, uint256 amount) internal {
