@@ -186,7 +186,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         delete orders[orderId];
 
         if (order.metadata.finalStrike > order.metadata.initialStrike) {
-            if (order.positions.makerPosition == Position.Call) {
+            if (order.positions.makerPosition == Position.Above) {
                 winner = order.metadata.maker;
                 IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.metadata.payOut);
             } else {
@@ -194,7 +194,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
                 IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.taker, order.metadata.payOut);
             }
         } else if (order.metadata.finalStrike < order.metadata.initialStrike) {
-            if (order.positions.makerPosition == Position.Put) {
+            if (order.positions.makerPosition == Position.Below) {
                 winner = order.metadata.maker;
                 IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.metadata.payOut);
             } else {
@@ -384,7 +384,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
     function _initializePositions(Position position) internal pure returns (Positions memory) {
         return Positions({
             makerPosition: position,
-            takerPosition: position == Position.Call ? Position.Put : Position.Call
+            takerPosition: position == Position.Above ? Position.Below : Position.Above
         });
     }
 

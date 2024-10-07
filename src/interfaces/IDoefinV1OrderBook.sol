@@ -9,8 +9,8 @@ pragma solidity ^0.8.24;
 interface IDoefinV1OrderBook {
     /// @notice Side of the option.
     enum Position {
-        Call,
-        Put
+        Above,
+        Below
     }
 
     /// @notice The expiry type of the order to be created
