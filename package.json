@@ -9,7 +9,9 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "4.9.2",
-    "@prb/math": "4.0.x"
+    "@prb/math": "4.0.x",
+    "axios": "^1.7.7",
+    "delay": "^6.0.0"
   },
   "devDependencies": {
     "@prb/test": "0.6.4",
