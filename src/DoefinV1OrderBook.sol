@@ -2,13 +2,15 @@
 pragma solidity ^0.8.24;
 
 import { Errors } from "./libraries/Errors.sol";
+import { Ownable } from "solady/contracts/auth/Ownable.sol";
 import { ERC1155 } from "solady/contracts/tokens/ERC1155.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IDoefinV1OrderBook } from "./interfaces/IDoefinV1OrderBook.sol";
 import { IDoefinConfig } from "./interfaces/IDoefinConfig.sol";
+import { IDoefinBlockHeaderOracle } from "./interfaces/IDoefinBlockHeaderOracle.sol";
 
-contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
+contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownable {
     using SafeERC20 for IERC20;
 
     /// @notice Doefin Config
@@ -54,7 +56,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         if (_config == address(0)) {
             revert Errors.ZeroAddress();
         }
-
+        _initializeOwner(msg.sender);
         config = IDoefinConfig(_config);
         blockHeaderOracle = config.getBlockHeaderOracle();
         optionsFeeAddress = config.getFeeAddress();
@@ -330,6 +332,33 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
         }
     }
 
+    /**
+     * @dev Delete multiple orders from the order-book
+     */
+    function deleteOrders() external onlyOwner {
+        IDoefinBlockHeaderOracle.BlockHeader memory blockHeader =
+            IDoefinBlockHeaderOracle(blockHeaderOracle).getLatestBlockHeader();
+
+        uint256 len = registeredOrderIds.length;
+        for (uint256 i = 0; i < len; i++) {
+            uint256 orderId = registeredOrderIds[i];
+            BinaryOption storage order = orders[orderId];
+
+            bool isMatched = order.metadata.status == Status.Matched;
+            bool isPastDeadline = block.timestamp > order.metadata.deadline;
+            bool isExpired = (
+                order.metadata.expiryType == ExpiryType.BlockNumber && blockHeader.blockNumber >= order.metadata.expiry
+            ) || (order.metadata.expiryType == ExpiryType.Timestamp && blockHeader.timestamp >= order.metadata.expiry);
+
+            if (!isMatched && (isExpired || isPastDeadline)) {
+                delete orders[orderId];
+                registeredOrderIds[i] = registeredOrderIds[len - 1];
+                registeredOrderIds.pop();
+                len--;
+            }
+        }
+    }
+
     function uri(uint256 id) public view override returns (string memory) {
         return "";
     }
@@ -417,7 +446,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
             collateralToken: collateralToken,
             initialStrike: strike,
             finalStrike: 0,
-            payOut: notional - (notional / 100),
+            payOut: notional - (notional * config.getFee() / 10_000),
             expiry: expiry,
             expiryType: expiryType,
             deadline: deadline,
@@ -490,5 +519,10 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context {
     function _handleFeeTransfer(address collateralToken, uint256 notional, uint256 payOut) internal {
         uint256 fee = notional - payOut;
         IERC20(collateralToken).safeTransfer(optionsFeeAddress, fee);
+    }
+
+    /// @dev To prevent double-initialization (reuses the owner storage slot for efficiency).
+    function _guardInitializeOwner() internal pure virtual override(Ownable) returns (bool) {
+        return true;
     }
 }

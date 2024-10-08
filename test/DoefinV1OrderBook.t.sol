@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import { IERC20, Base_Test } from "./Base.t.sol";
 import { Test } from "forge-std/Test.sol";
-import { Errors, DoefinV1OrderBook, IDoefinV1OrderBook } from "../src/DoefinV1OrderBook.sol";
+import { Errors, DoefinV1OrderBook, IDoefinV1OrderBook, Ownable } from "../src/DoefinV1OrderBook.sol";
 import { DoefinV1BlockHeaderOracle } from "../src/DoefinV1BlockHeaderOracle.sol";
 
 /// @title DoefinV1OrderBook_Test
@@ -1029,5 +1029,173 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.expectEmit();
         emit IDoefinV1OrderBook.OrderExercised(orderId, orderBook.getOrder(orderId).metadata.payOut, winner);
         orderBook.exerciseOrder(orderId);
+    }
+
+    function test_DeleteOrders_OnlyOwnerCanCall() public {
+        vm.prank(users.alice);
+        vm.expectRevert(Ownable.Unauthorized.selector);
+        orderBook.deleteOrders();
+    }
+
+    function test_DeleteOrders_DeletesExpiredUnmatchedOrders() public {
+        uint256 currentBlockNumber = blockHeaderOracle.currentBlockHeight(); //().blockNumber;
+        uint256 currentTimestamp = block.timestamp;
+
+        // Create an expired order (by block number)
+        uint256 orderId1 = _createOrder(
+            users.alice,
+            1000,
+            minCollateralAmount,
+            minCollateralAmount * 2,
+            currentBlockNumber - 1,
+            IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            IDoefinV1OrderBook.Position.Above,
+            currentTimestamp + 1 hours
+        );
+
+        // Create an expired order (by timestamp)
+        uint256 orderId2 = _createOrder(
+            users.james,
+            2000,
+            minCollateralAmount,
+            minCollateralAmount * 2,
+            currentTimestamp,
+            IDoefinV1OrderBook.ExpiryType.Timestamp,
+            IDoefinV1OrderBook.Position.Below,
+            currentTimestamp + 1 hours
+        );
+
+        // Create a non-expired order
+        uint256 orderId3 = _createOrder(
+            users.alice,
+            3000,
+            minCollateralAmount,
+            minCollateralAmount * 2,
+            currentBlockNumber + 100,
+            IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            IDoefinV1OrderBook.Position.Above,
+            currentTimestamp + 1 hours
+        );
+
+        vm.warp(100);
+        vm.prank(address(this));
+        orderBook.deleteOrders();
+
+        // Verify deleted orders
+        IDoefinV1OrderBook.BinaryOption memory deletedOrder1 = orderBook.getOrder(orderId1);
+        assertEq(uint256(deletedOrder1.metadata.status), 0);
+
+        IDoefinV1OrderBook.BinaryOption memory deletedOrder2 = orderBook.getOrder(orderId2);
+        assertEq(uint256(deletedOrder2.metadata.status), 0);
+
+        // Verify non-deleted order
+        IDoefinV1OrderBook.BinaryOption memory nonDeletedOrder = orderBook.getOrder(orderId3);
+        assertEq(uint256(nonDeletedOrder.metadata.status), uint256(IDoefinV1OrderBook.Status.Pending));
+    }
+
+    function test_DeleteOrders_DoesNotDeleteMatchedOrders() public {
+        uint256 currentBlockNumber = blockHeaderOracle.currentBlockHeight();
+        uint256 currentTimestamp = block.timestamp;
+
+        // Create an expired matched order
+        uint256 orderId = _createOrder(
+            users.alice,
+            1000,
+            minCollateralAmount,
+            minCollateralAmount * 2,
+            currentBlockNumber - 1,
+            IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            IDoefinV1OrderBook.Position.Above,
+            currentTimestamp + 1 hours
+        );
+
+        // Match the order
+        vm.startPrank(users.broker);
+        dai.approve(address(orderBook), minCollateralAmount);
+        orderBook.matchOrder(orderId);
+        vm.stopPrank();
+
+        vm.prank(address(this));
+        orderBook.deleteOrders();
+
+        // Verify the order is still there and matched
+        IDoefinV1OrderBook.BinaryOption memory matchedOrder = orderBook.getOrder(orderId);
+        assertEq(uint256(matchedOrder.metadata.status), uint256(IDoefinV1OrderBook.Status.Matched));
+    }
+
+    function test_DeleteOrders_DeletesPastDeadlineOrders() public {
+        uint256 currentBlockNumber = blockHeaderOracle.currentBlockHeight();
+        uint256 currentTimestamp = block.timestamp;
+
+        // Create an order past its deadline
+        uint256 orderId1 = _createOrder(
+            users.alice,
+            1000,
+            minCollateralAmount,
+            minCollateralAmount * 2,
+            currentBlockNumber + 100,
+            IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            IDoefinV1OrderBook.Position.Above,
+            currentTimestamp - 1 // Past deadline
+        );
+
+        // Create a non-expired order
+        uint256 orderId2 = _createOrder(
+            users.james,
+            2000,
+            minCollateralAmount,
+            minCollateralAmount * 2,
+            currentBlockNumber + 100,
+            IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            IDoefinV1OrderBook.Position.Below,
+            currentTimestamp + 1 hours
+        );
+
+        vm.prank(address(this));
+        orderBook.deleteOrders();
+
+        // Verify deleted order
+        IDoefinV1OrderBook.BinaryOption memory deletedOrder = orderBook.getOrder(orderId1);
+        assertEq(uint256(deletedOrder.metadata.status), 0);
+
+        // Verify non-deleted order
+        IDoefinV1OrderBook.BinaryOption memory nonDeletedOrder = orderBook.getOrder(orderId2);
+        assertEq(uint256(nonDeletedOrder.metadata.status), uint256(IDoefinV1OrderBook.Status.Pending));
+    }
+
+    function _createOrder(
+        address maker,
+        uint256 strike,
+        uint256 premium,
+        uint256 notional,
+        uint256 expiry,
+        IDoefinV1OrderBook.ExpiryType expiryType,
+        IDoefinV1OrderBook.Position position,
+        uint256 deadline
+    )
+        internal
+        returns (uint256)
+    {
+        vm.startPrank(maker);
+        dai.approve(address(orderBook), premium);
+
+        address[] memory allowed = new address[](1);
+        allowed[0] = users.broker;
+
+        IDoefinV1OrderBook.CreateOrderInput memory input = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: expiryType,
+            position: position,
+            collateralToken: collateralToken,
+            deadline: deadline,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(input);
+        vm.stopPrank();
+        return orderId;
     }
 }

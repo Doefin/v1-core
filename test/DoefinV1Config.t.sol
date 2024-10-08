@@ -4,6 +4,7 @@ pragma solidity >=0.8.19;
 import { Base_Test } from "./Base.t.sol";
 import { Test } from "forge-std/Test.sol";
 import { IDoefinConfig } from "../src/interfaces/IDoefinConfig.sol";
+import { Errors } from "../src/libraries/Errors.sol";
 
 /// @title DoefinV1Config_Test
 contract DoefinV1Config_Test is Base_Test {
@@ -36,5 +37,24 @@ contract DoefinV1Config_Test is Base_Test {
         vm.expectEmit();
         emit IDoefinConfig.RemoveTokenFromApprovedList(address(dai));
         config.removeTokenFromApprovedList(address(dai));
+    }
+
+    function test_SetFee_NotOwner() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        vm.prank(users.broker);
+        config.setFee(200);
+    }
+
+    function test_SetFee_InvalidFee() public {
+        vm.expectRevert(Errors.Config_InvalidFee.selector);
+        config.setFee(10_001); // Trying to set fee > 100%
+    }
+
+    function test_SetFee() public {
+        uint256 newFee = 200; // 2%
+        vm.expectEmit();
+        emit IDoefinConfig.FeeSet(newFee);
+        config.setFee(newFee);
+        assertEq(config.getFee(), newFee, "Fee was not set correctly");
     }
 }

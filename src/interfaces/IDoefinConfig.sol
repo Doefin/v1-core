@@ -43,6 +43,8 @@ interface IDoefinConfig {
     /// @notice Emitted when the authorized relayer address is set
     event SetAuthorizedRelayer(address indexed authorizedRelayer);
 
+    event FeeSet(uint256 newFee);
+
     /*//////////////////////////////////////////////////////////////////////////
                                NON-CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
@@ -60,9 +62,12 @@ interface IDoefinConfig {
     /// @return true/false
     function tokenIsInApprovedList(address token) external view returns (bool);
 
+    /// @notice Set the fee of the order book
+    /// @param newFee The fee charged to an order
+    function setFee(uint256 newFee) external;
+
     /// @notice Set the order book address
     /// @param orderBook The order book address
-
     function setOrderBook(address orderBook) external;
 
     /// @notice Updates the options manager address
@@ -84,6 +89,10 @@ interface IDoefinConfig {
     /*//////////////////////////////////////////////////////////////////////////
                                  CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
+    /// @notice Return the order book fee
+    /// @return The fee of the order book
+    function getFee() external view returns (uint256);
+
     /// @notice Returns the approved token struct
     /// @param token The approved token
     /// @return ApprovedToken The ApprovedToken

@@ -12,6 +12,7 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     /*//////////////////////////////////////////////////////////////////////////
                                    PUBLIC STORAGE
     //////////////////////////////////////////////////////////////////////////*/
+    uint256 public fee;
     address public feeAddress;
     address public orderBook;
     address public trustedForwarder;
@@ -25,7 +26,9 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @dev Initializes the factor and it's owner contract
-    constructor() Ownable() { }
+    constructor() Ownable() {
+        fee = 100; // Set default fee to 1% (100 basis points)
+    }
 
     /*//////////////////////////////////////////////////////////////////////////
                          USER-FACING NON-CONSTANT FUNCTIONS
@@ -113,6 +116,16 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
         emit SetAuthorizedRelayer(newAuthorizedRelayer);
     }
 
+    //@@inheritdoc
+    function setFee(uint256 newFee) external onlyOwner {
+        if (newFee > 10_000) {
+            // fee is not greater than 100% (10000 basis points)
+            revert Errors.Config_InvalidFee();
+        }
+        fee = newFee;
+        emit FeeSet(newFee);
+    }
+
     /*//////////////////////////////////////////////////////////////////////////
                                    GETTER FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
@@ -145,5 +158,10 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     //@@inheritdoc IDoefinConfig
     function getAuthorizedRelayer() public view returns (address) {
         return authorizedRelayer;
+    }
+
+    //@@inheritdoc IDoefinConfig
+    function getFee() public view returns (uint256) {
+        return fee;
     }
 }
