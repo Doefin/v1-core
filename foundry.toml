@@ -8,7 +8,7 @@
     "DoefinV1BlockHeaderOracle", "Oracle"
   ]
   optimizer = true
-  optimizer_runs = 1000
+  optimizer_runs = 50
   out = "out"
   script = "script"
   sender = "0xc83cCcd964FAe2174749A3B5CAe65d6C60c28Db2"
