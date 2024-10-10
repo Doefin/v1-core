@@ -96,6 +96,7 @@ interface IDoefinV1OrderBook {
         ExpiryType expiryType;
         address[] allowed;
         uint256 strike;
+        uint256 deadline;
     }
 
     struct CreateAndMatchOrderInput {
@@ -191,6 +192,11 @@ interface IDoefinV1OrderBook {
     /// @param id The order id
     /// @param position The maker's new position
     event OrderPositionUpdated(uint256 indexed id, Position position);
+
+    /// @notice Emitted when a order's deadline is updated
+    /// @param id The order id
+    /// @param deadline The order's new deadline
+    event OrderDeadlineUpdated(uint256 id, uint256 deadline);
 
     /// @notice Emitted when the order's expiry and expiry type are updated
     /// @param id The order id

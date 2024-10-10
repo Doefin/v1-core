@@ -290,6 +290,12 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
             revert Errors.OrderBook_InvalidNotional();
         }
 
+        // Update deadline
+        if (updateOrder.deadline != 0 && updateOrder.deadline > block.timestamp) {
+            order.metadata.deadline = updateOrder.deadline;
+            emit OrderDeadlineUpdated(orderId, updateOrder.deadline);
+        }
+
         // Update position
         if (updateOrder.position != order.positions.makerPosition) {
             order.positions.makerPosition = updateOrder.position;

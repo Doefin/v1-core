@@ -398,11 +398,14 @@ contract DoefinV1OrderBook_Test is Base_Test {
         newAllowed[1] = users.james;
         updateParams.allowed = newAllowed;
         updateParams.strike = 100;
+        updateParams.deadline = block.timestamp + 2 days;
 
         dai.approve(address(orderBook), uint256(updateParams.premium));
 
         vm.expectEmit();
         emit IDoefinV1OrderBook.NotionalIncreased(orderId, updateParams.notional);
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderDeadlineUpdated(orderId, updateParams.deadline);
         vm.expectEmit();
         emit IDoefinV1OrderBook.OrderPositionUpdated(orderId, updateParams.position);
         vm.expectEmit();
@@ -428,6 +431,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         assertEq(updatedOrder.metadata.initialStrike, updateParams.strike);
 
         vm.stopBroadcast();
+
 
         // Revert if caller is not maker
         vm.startBroadcast(users.james);
@@ -503,6 +507,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
         newAllowed[1] = users.james;
         updateParams.allowed = newAllowed;
         updateParams.strike = 100;
+        updateParams.deadline = block.timestamp + 2 days;
+
 
         vm.startBroadcast(users.alice);
         vm.expectEmit();
