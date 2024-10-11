@@ -346,7 +346,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
             IDoefinBlockHeaderOracle(blockHeaderOracle).getLatestBlockHeader();
 
         uint256 len = registeredOrderIds.length;
-        for (uint256 i = 0; i < len; ) {
+        for (uint256 i = 0; i < len;) {
             uint256 orderId = registeredOrderIds[i];
             BinaryOption storage order = orders[orderId];
 

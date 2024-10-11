@@ -432,7 +432,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.stopBroadcast();
 
-
         // Revert if caller is not maker
         vm.startBroadcast(users.james);
         vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_CallerNotMaker.selector));
@@ -508,7 +507,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         updateParams.allowed = newAllowed;
         updateParams.strike = 100;
         updateParams.deadline = block.timestamp + 2 days;
-
 
         vm.startBroadcast(users.alice);
         vm.expectEmit();
