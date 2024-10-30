@@ -61,6 +61,7 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
                                   SETTER FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
     //@@inheritdoc IDoefinConfig
+
     function setOrderBook(address newOrderBook) external override onlyOwner {
         if (newOrderBook == address(0)) {
             revert Errors.ZeroAddress();
