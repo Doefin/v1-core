@@ -57,4 +57,99 @@ contract DoefinV1Config_Test is Base_Test {
         config.setFee(newFee);
         assertEq(config.getFee(), newFee, "Fee was not set correctly");
     }
+
+    function test_SetOrderBook_NotOwner() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        vm.prank(users.broker);
+        config.setOrderBook(address(1));
+    }
+
+    function test_SetOrderBook_ZeroAddress() public {
+        vm.expectRevert(Errors.ZeroAddress.selector);
+        config.setOrderBook(address(0));
+    }
+
+    function test_SetOrderBook() public {
+        address newOrderBook = address(1);
+        vm.expectEmit();
+        emit IDoefinConfig.SetOrderBook(newOrderBook);
+        config.setOrderBook(newOrderBook);
+        assertEq(config.getOrderBook(), newOrderBook, "OrderBook was not set correctly");
+    }
+
+    function test_SetFeeAddress_NotOwner() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        vm.prank(users.broker);
+        config.setFeeAddress(address(1));
+    }
+
+    function test_SetFeeAddress_ZeroAddress() public {
+        vm.expectRevert(Errors.ZeroAddress.selector);
+        config.setFeeAddress(address(0));
+    }
+
+    function test_SetFeeAddress() public {
+        address newFeeAddress = address(1);
+        vm.expectEmit();
+        emit IDoefinConfig.SetFeeAddress(newFeeAddress);
+        config.setFeeAddress(newFeeAddress);
+        assertEq(config.getFeeAddress(), newFeeAddress, "FeeAddress was not set correctly");
+    }
+
+    function test_SetBlockHeaderOracle_NotOwner() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        vm.prank(users.broker);
+        config.setBlockHeaderOracle(address(1));
+    }
+
+    function test_SetBlockHeaderOracle_ZeroAddress() public {
+        vm.expectRevert(Errors.ZeroAddress.selector);
+        config.setBlockHeaderOracle(address(0));
+    }
+
+    function test_SetBlockHeaderOracle() public {
+        address newOracle = address(1);
+        vm.expectEmit();
+        emit IDoefinConfig.SetBlockHeaderOracle(newOracle);
+        config.setBlockHeaderOracle(newOracle);
+        assertEq(config.getBlockHeaderOracle(), newOracle, "BlockHeaderOracle was not set correctly");
+    }
+
+    function test_SetTrustedForwarder_NotOwner() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        vm.prank(users.broker);
+        config.setTrustedForwarder(address(1));
+    }
+
+    function test_SetTrustedForwarder_ZeroAddress() public {
+        vm.expectRevert(Errors.ZeroAddress.selector);
+        config.setTrustedForwarder(address(0));
+    }
+
+    function test_SetTrustedForwarder() public {
+        address newForwarder = address(1);
+        vm.expectEmit();
+        emit IDoefinConfig.SetTrustedForwarder(newForwarder);
+        config.setTrustedForwarder(newForwarder);
+        assertEq(config.getTrustedForwarder(), newForwarder, "TrustedForwarder was not set correctly");
+    }
+
+    function test_SetAuthorizedRelayer_NotOwner() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        vm.prank(users.broker);
+        config.setAuthorizedRelayer(address(1));
+    }
+
+    function test_SetAuthorizedRelayer_ZeroAddress() public {
+        vm.expectRevert(Errors.ZeroAddress.selector);
+        config.setAuthorizedRelayer(address(0));
+    }
+
+    function test_SetAuthorizedRelayer() public {
+        address newRelayer = address(1);
+        vm.expectEmit();
+        emit IDoefinConfig.SetAuthorizedRelayer(newRelayer);
+        config.setAuthorizedRelayer(newRelayer);
+        assertEq(config.getAuthorizedRelayer(), newRelayer, "AuthorizedRelayer was not set correctly");
+    }
 }

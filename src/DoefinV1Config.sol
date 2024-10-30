@@ -57,16 +57,11 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
         delete approvedTokens[token];
         emit RemoveTokenFromApprovedList(token);
     }
-
-    //@@inheritdoc IDoefinConfig
-    function tokenIsInApprovedList(address token) public view returns (bool) {
-        return address(approvedTokens[token].token) != address(0);
-    }
-
     /*//////////////////////////////////////////////////////////////////////////
-                                  GETTER FUNCTIONS
+                                  SETTER FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
     //@@inheritdoc IDoefinConfig
+
     function setOrderBook(address newOrderBook) external override onlyOwner {
         if (newOrderBook == address(0)) {
             revert Errors.ZeroAddress();
@@ -97,7 +92,7 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     }
 
     //@@inheritdoc
-    function setTrustedForwarder(address newTrustedForwarder) external {
+    function setTrustedForwarder(address newTrustedForwarder) external onlyOwner {
         if (newTrustedForwarder == address(0)) {
             revert Errors.ZeroAddress();
         }
@@ -107,7 +102,7 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     }
 
     //@@inheritdoc
-    function setAuthorizedRelayer(address newAuthorizedRelayer) external {
+    function setAuthorizedRelayer(address newAuthorizedRelayer) external onlyOwner {
         if (newAuthorizedRelayer == address(0)) {
             revert Errors.ZeroAddress();
         }
@@ -163,5 +158,10 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     //@@inheritdoc IDoefinConfig
     function getFee() public view returns (uint256) {
         return fee;
+    }
+
+    //@@inheritdoc IDoefinConfig
+    function tokenIsInApprovedList(address token) public view returns (bool) {
+        return address(approvedTokens[token].token) != address(0);
     }
 }
