@@ -521,6 +521,58 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
+    function test__UpdateOrder_RevertWhenPremiumExceedsNotional(
+        uint256 strike,
+        uint256 premium,
+        uint256 expiry,
+        address counterparty
+    )
+        public
+    {
+        vm.assume(strike != 0);
+        vm.assume(expiry != 0);
+        vm.assume(counterparty != address(0));
+        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+
+        uint256 notional = premium + ((30 * premium) / 100);
+        address[] memory allowed = new address[](1);
+        allowed[0] = counterparty;
+
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Below,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
+        // Prepare update parameters that would make makerPremium >= notional
+        IDoefinV1OrderBook.UpdateOrder memory updateParams;
+        updateParams.notional = notional; // Keep the same notional
+        updateParams.premium = notional; // Set premium equal to notional (should fail)
+
+        dai.approve(address(orderBook), updateParams.premium);
+
+        vm.expectRevert(Errors.OrderBook_InvalidNotional.selector);
+        orderBook.updateOrder(orderId, updateParams);
+
+        // Try with premium greater than notional
+        updateParams.premium = notional + 1; // Set premium greater than notional (should fail)
+
+        vm.expectRevert(Errors.OrderBook_InvalidNotional.selector);
+        orderBook.updateOrder(orderId, updateParams);
+        vm.stopBroadcast();
+    }
+
     /*//////////////////////////////////////////////////////////////
                   MATCH ORDER
     //////////////////////////////////////////////////////////////*/

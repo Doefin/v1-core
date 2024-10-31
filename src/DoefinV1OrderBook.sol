@@ -286,10 +286,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
             }
         }
 
-        if (order.premiums.makerPremium >= order.premiums.notional) {
-            revert Errors.OrderBook_InvalidNotional();
-        }
-
         // Update deadline
         if (updateOrder.deadline != 0 && updateOrder.deadline > block.timestamp) {
             order.metadata.deadline = updateOrder.deadline;
@@ -335,6 +331,10 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
                 IERC20(order.metadata.collateralToken).safeTransfer(_msgSender(), premiumDecrease);
                 emit PremiumDecreased(orderId, updateOrder.premium);
             }
+        }
+
+        if (order.premiums.makerPremium >= order.premiums.notional) {
+            revert Errors.OrderBook_InvalidNotional();
         }
     }
 
