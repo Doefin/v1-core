@@ -133,7 +133,7 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
 
         vm.startBroadcast(counterparty);
         dai.approve(address(orderBook), premium);
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopBroadcast();
 
         // Submit 6 blocks (settlement should not occur yet)

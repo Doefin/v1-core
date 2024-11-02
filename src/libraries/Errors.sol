@@ -23,6 +23,9 @@ library Errors {
     /// @notice Thrown when strike is zero
     error OrderBook_ZeroStrike();
 
+    /// @notice Thrown when the nonce is invalid
+    error OrderBook_InvalidNonce();
+
     /// @notice Thrown when amount is zero
     error OrderBook_ZeroAmount();
 
