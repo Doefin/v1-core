@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "forge-std/Console.sol";
-
 import { IERC20, Base_Test } from "./Base.t.sol";
 import { Test } from "forge-std/Test.sol";
 import { Errors, DoefinV1OrderBook, IDoefinV1OrderBook, Ownable } from "../src/DoefinV1OrderBook.sol";
