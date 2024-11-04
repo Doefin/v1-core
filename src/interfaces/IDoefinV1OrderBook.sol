@@ -61,6 +61,7 @@ interface IDoefinV1OrderBook {
      * @param deadline The deadline before when the option can be matched.
      * @param allowed Addresses that are allowed to buy the issuance. If the array is empty, all addresses are allowed
      *        to buy the issuance.
+     * @param nonce The nonce of an order which increments each time the order is updated
      */
     struct Metadata {
         Status status;
@@ -74,6 +75,7 @@ interface IDoefinV1OrderBook {
         ExpiryType expiryType;
         uint256 deadline;
         address[] allowed;
+        uint256 nonce;
     }
 
     /**
@@ -232,8 +234,9 @@ interface IDoefinV1OrderBook {
     /**
      * @dev Match a given order by a maker
      * @param orderId The order id of the order to match
+     * @param expectedNonce The nonce of the order to match
      */
-    function matchOrder(uint256 orderId) external;
+    function matchOrder(uint256 orderId, uint256 expectedNonce) external;
 
     /**
      * @dev Cancel an existing order

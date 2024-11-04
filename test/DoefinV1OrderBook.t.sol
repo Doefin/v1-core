@@ -330,7 +330,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         //Match order
         vm.startBroadcast(users.broker);
         dai.approve(address(orderBook), premium);
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopBroadcast();
 
         // Revert if order is not pending
@@ -448,7 +448,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         //Match order
         vm.startBroadcast(users.broker);
         dai.approve(address(orderBook), premium);
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopBroadcast();
 
         // Revert if order is not pending
@@ -573,6 +573,64 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
+    function test__UpdateOrder_IncrementNonce(
+        uint256 strike,
+        uint256 premium,
+        uint256 expiry,
+        address counterparty
+    )
+        public
+    {
+        vm.assume(strike != 0);
+        vm.assume(expiry != 0);
+        vm.assume(counterparty != address(0));
+        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+
+        uint256 notional = premium + ((30 * premium) / 100);
+        address[] memory allowed = new address[](1);
+        allowed[0] = users.broker;
+
+        // Create order
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Below,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
+        // Get initial nonce
+        IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
+        uint256 initialNonce = order.metadata.nonce;
+
+        // Update order multiple times
+        IDoefinV1OrderBook.UpdateOrder memory updateParams;
+        updateParams.notional = notional + (notional / 10);
+        updateParams.premium = premium + (premium / 20);
+
+        dai.approve(address(orderBook), updateParams.premium);
+        orderBook.updateOrder(orderId, updateParams);
+        order = orderBook.getOrder(orderId);
+        assertEq(order.metadata.nonce, initialNonce + 1);
+
+        updateParams.premium = premium + (premium / 10);
+        dai.approve(address(orderBook), updateParams.premium);
+
+        orderBook.updateOrder(orderId, updateParams);
+        order = orderBook.getOrder(orderId);
+        assertEq(order.metadata.nonce, initialNonce + 2);
+        vm.stopBroadcast();
+    }
+
     /*//////////////////////////////////////////////////////////////
                   MATCH ORDER
     //////////////////////////////////////////////////////////////*/
@@ -617,7 +675,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.broker);
         vm.warp(block.timestamp + 3 days);
         dai.approve(address(orderBook), premium);
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopBroadcast();
     }
 
@@ -660,7 +718,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.startBroadcast(users.broker);
         dai.approve(address(orderBook), premium);
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopBroadcast();
     }
 
@@ -704,7 +762,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.broker);
         dai.approve(address(orderBook), premium);
 
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         orderBook.safeTransferFrom(users.broker, users.alice, orderId, 1, "");
         vm.stopBroadcast();
     }
@@ -747,7 +805,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         );
 
         uint256 feeBalBefore = IERC20(order.metadata.collateralToken).balanceOf(users.feeAddress);
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopBroadcast();
 
         order = orderBook.getOrder(orderId);
@@ -814,14 +872,16 @@ contract DoefinV1OrderBook_Test is Base_Test {
         );
 
         uint256 feeBalBefore = IERC20(order.metadata.collateralToken).balanceOf(users.feeAddress);
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopBroadcast();
 
         vm.startBroadcast(counterparty);
         dai.approve(address(orderBook), premium);
 
+        uint256 expectedNonce = orderBook.getOrder(orderId).metadata.nonce;
+
         vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_OrderMustBePending.selector));
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, expectedNonce);
         vm.stopBroadcast();
     }
 
@@ -875,7 +935,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         );
 
         uint256 feeBalBefore = IERC20(order.metadata.collateralToken).balanceOf(users.feeAddress);
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopBroadcast();
 
         order = orderBook.getOrder(orderId);
@@ -890,6 +950,70 @@ contract DoefinV1OrderBook_Test is Base_Test {
             order.premiums.notional - order.metadata.payOut
         );
         assertEq(order.premiums.takerPremium + order.premiums.makerPremium, order.premiums.notional);
+    }
+
+    function test__MatchOrder_RevertOnInvalidNonce(
+        uint256 strike,
+        uint256 premium,
+        uint256 expiry,
+        address counterparty
+    )
+        public
+    {
+        vm.assume(strike != 0);
+        vm.assume(expiry != 0);
+        vm.assume(counterparty != address(0));
+        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+
+        uint256 notional = premium + ((30 * premium) / 100);
+        address[] memory allowed = new address[](1);
+        allowed[0] = users.broker;
+
+        // Create order
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Below,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+        vm.stopBroadcast();
+
+        // Get initial nonce
+        IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
+        uint256 initialNonce = order.metadata.nonce;
+
+        // Update order
+        vm.startBroadcast(users.alice);
+        IDoefinV1OrderBook.UpdateOrder memory updateParams;
+        updateParams.position = IDoefinV1OrderBook.Position.Above;
+        orderBook.updateOrder(orderId, updateParams);
+        vm.stopBroadcast();
+
+        // Try to match with old nonce
+        vm.startBroadcast(users.broker);
+        dai.approve(address(orderBook), premium);
+        vm.expectRevert(Errors.OrderBook_InvalidNonce.selector);
+        orderBook.matchOrder(orderId, initialNonce);
+        vm.stopBroadcast();
+
+        // Match with correct nonce
+        vm.startBroadcast(users.broker);
+        orderBook.matchOrder(orderId, initialNonce + 1);
+        vm.stopBroadcast();
+
+        // Verify order is matched
+        order = orderBook.getOrder(orderId);
+        assertEq(uint256(order.metadata.status), uint256(IDoefinV1OrderBook.Status.Matched));
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -935,7 +1059,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.broker);
         dai.approve(address(orderBook), premium);
 
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopBroadcast();
 
         orderBook.exerciseOrder(orderId);
@@ -986,7 +1110,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.broker);
         dai.approve(address(orderBook), premium);
 
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopBroadcast();
 
         vm.startBroadcast(orderBook.blockHeaderOracle());
@@ -1059,7 +1183,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.broker);
         dai.approve(address(orderBook), premium);
 
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopBroadcast();
 
         vm.startBroadcast(orderBook.blockHeaderOracle());
@@ -1168,7 +1292,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         // Match the order
         vm.startPrank(users.broker);
         dai.approve(address(orderBook), minCollateralAmount);
-        orderBook.matchOrder(orderId);
+        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopPrank();
 
         vm.prank(address(this));

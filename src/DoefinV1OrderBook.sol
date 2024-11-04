@@ -92,10 +92,14 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         return newOrderId;
     }
 
-    function matchOrder(uint256 orderId) external {
+    function matchOrder(uint256 orderId, uint256 expectedNonce) external {
         BinaryOption storage order = orders[orderId];
         if (order.metadata.status != Status.Pending) {
             revert Errors.OrderBook_OrderMustBePending();
+        }
+
+        if (order.metadata.nonce != expectedNonce) {
+            revert Errors.OrderBook_InvalidNonce();
         }
 
         if (block.timestamp > order.metadata.deadline) {
@@ -273,6 +277,9 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         if (order.metadata.status != Status.Pending) {
             revert Errors.OrderBook_OrderMustBePending();
         }
+
+        // Increment nonce
+        order.metadata.nonce += 1;
 
         //Update Notional
         if (updateOrder.notional != 0) {
@@ -458,7 +465,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
             expiry: expiry,
             expiryType: expiryType,
             deadline: deadline,
-            allowed: allowed
+            allowed: allowed,
+            nonce: 0
         });
     }
 
