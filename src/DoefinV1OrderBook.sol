@@ -348,6 +348,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         uint256 len = orderIdCounter;
         for (uint256 orderId = 0; orderId < len; orderId++) {
             BinaryOption storage order = orders[orderId];
+            if(order.metadata.maker == address(0)) continue;
 
             bool isMatched = order.metadata.status == Status.Matched;
             bool isPastDeadline = block.timestamp > order.metadata.deadline;
