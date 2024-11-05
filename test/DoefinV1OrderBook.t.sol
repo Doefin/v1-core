@@ -198,6 +198,44 @@ contract DoefinV1OrderBook_Test is Base_Test {
         assertEq(orderBook.balanceOf(users.alice, orderId), 1);
     }
 
+    function test__CreateOrder_RevertIfTokenIsNotApproved(
+        uint256 strike,
+        uint256 premium,
+        uint256 expiry,
+        address counterparty
+    )
+        public
+    {
+        vm.assume(strike != 0);
+        vm.assume(expiry != 0);
+        vm.assume(counterparty != address(0));
+        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+
+        uint256 notional = premium + ((30 * premium) / 100);
+        address[] memory allowed = new address[](1);
+        allowed[0] = counterparty;
+
+        config.removeTokenFromApprovedList(collateralToken);
+
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
+
+        vm.expectRevert(Errors.OrderBook_InvalidCollateralToken.selector);
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Below,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        orderBook.createOrder(createOrderInput);
+    }
+
     function test__createAndMatchOrder(uint256 strike, uint256 premium, uint256 expiry, address counterparty) public {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
@@ -1014,6 +1052,56 @@ contract DoefinV1OrderBook_Test is Base_Test {
         // Verify order is matched
         order = orderBook.getOrder(orderId);
         assertEq(uint256(order.metadata.status), uint256(IDoefinV1OrderBook.Status.Matched));
+    }
+
+    function test__MatchOrder_RevertOnInvalidCollateralToken(
+        uint256 strike,
+        uint256 premium,
+        uint256 expiry,
+        address counterparty
+    )
+        public
+    {
+        uint256 expiry = block.timestamp + 2 days;
+
+        vm.assume(strike != 0);
+        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(counterparty == users.broker || counterparty == users.rick || counterparty == users.james);
+
+        uint256 notional = premium + ((30 * premium) / 100);
+        address[] memory allowed = new address[](3);
+        allowed[0] = users.broker;
+        allowed[1] = users.rick;
+        allowed[2] = users.james;
+
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Below,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
+        vm.stopBroadcast();
+
+        config.removeTokenFromApprovedList(collateralToken);
+        IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
+        uint256 initialNonce = order.metadata.nonce;
+
+        vm.startBroadcast(counterparty);
+        dai.approve(address(orderBook), premium);
+        vm.expectRevert(Errors.OrderBook_TokenIsNotApproved.selector);
+        orderBook.matchOrder(orderId, initialNonce);
+        vm.stopBroadcast();
     }
 
     /*//////////////////////////////////////////////////////////////

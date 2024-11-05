@@ -525,14 +525,22 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
     }
 
     function _handleCollateralTransfer(address collateralToken, address from, uint256 amount) internal {
+        if (!config.tokenIsInApprovedList(collateralToken)) {
+            revert Errors.OrderBook_TokenIsNotApproved();
+        }
+
         uint256 balBefore = IERC20(collateralToken).balanceOf(address(this));
         IERC20(collateralToken).safeTransferFrom(from, address(this), amount);
         if (IERC20(collateralToken).balanceOf(address(this)) - balBefore != amount) {
-            revert Errors.OrderBook_UnableToMatchOrder();
+            revert Errors.OrderBook_IncorrectTransferAmount();
         }
     }
 
     function _handleFeeTransfer(address collateralToken, uint256 notional, uint256 payOut) internal {
+        if (!config.tokenIsInApprovedList(collateralToken)) {
+            revert Errors.OrderBook_TokenIsNotApproved();
+        }
+
         uint256 fee = notional - payOut;
         IERC20(collateralToken).safeTransfer(optionsFeeAddress, fee);
     }
