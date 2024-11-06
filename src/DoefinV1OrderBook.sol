@@ -85,7 +85,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
             createOrderInput.allowed
         );
 
-        _handleCollateralTransfer(createOrderInput.collateralToken, _msgSender(), createOrderInput.premium);
+        _handleCollateralTransferFrom(createOrderInput.collateralToken, _msgSender(), createOrderInput.premium);
         _mint(_msgSender(), newOrderId, 1, "");
 
         emit OrderCreated(newOrderId);
@@ -132,8 +132,10 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
 
         _registerOrderForSettlement(orderId);
 
-        _handleCollateralTransfer(order.metadata.collateralToken, _msgSender(), takerPremium);
-        _handleFeeTransfer(order.metadata.collateralToken, order.premiums.notional, order.metadata.payOut);
+        _handleCollateralTransferFrom(order.metadata.collateralToken, _msgSender(), takerPremium);
+        _handleCollateralTransfer(
+            order.metadata.collateralToken, optionsFeeAddress, order.premiums.notional - order.metadata.payOut
+        );
 
         _mint(_msgSender(), orderId, 1, "");
         emit OrderMatched(orderId, _msgSender(), takerPremium);
@@ -165,9 +167,11 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
 
         _registerOrderForSettlement(newOrderId);
 
-        _handleCollateralTransfer(order.collateralToken, order.maker, order.premium);
-        _handleCollateralTransfer(order.collateralToken, order.taker, takerPremium);
-        _handleFeeTransfer(order.collateralToken, order.notional, newBinaryOption.metadata.payOut);
+        _handleCollateralTransferFrom(order.collateralToken, order.maker, order.premium);
+        _handleCollateralTransferFrom(order.collateralToken, order.taker, takerPremium);
+        _handleCollateralTransfer(
+            order.collateralToken, optionsFeeAddress, order.notional - newBinaryOption.metadata.payOut
+        );
 
         _mint(order.maker, newOrderId, 1, "");
         _mint(order.taker, newOrderId, 1, "");
@@ -194,19 +198,19 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         if (order.metadata.finalStrike > order.metadata.initialStrike) {
             if (order.positions.makerPosition == Position.Above) {
                 winner = order.metadata.maker;
-                IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.metadata.payOut);
             } else {
                 winner = order.metadata.taker;
-                IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.taker, order.metadata.payOut);
             }
+
+            _handleCollateralTransfer(order.metadata.collateralToken, winner, order.metadata.payOut);
         } else if (order.metadata.finalStrike < order.metadata.initialStrike) {
             if (order.positions.makerPosition == Position.Below) {
                 winner = order.metadata.maker;
-                IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.metadata.payOut);
             } else {
                 winner = order.metadata.taker;
-                IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.taker, order.metadata.payOut);
             }
+
+            _handleCollateralTransfer(order.metadata.collateralToken, winner, order.metadata.payOut);
         }
         emit OrderExercised(orderId, order.metadata.payOut, winner);
         return orderId;
@@ -251,7 +255,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         _burn(order.metadata.maker, orderId, 1);
         delete orders[orderId];
 
-        IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.premiums.makerPremium);
+        _handleCollateralTransfer(order.metadata.collateralToken, order.metadata.maker, order.premiums.makerPremium);
         emit OrderCanceled(orderId);
     }
 
@@ -327,7 +331,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
             if (updateOrder.premium >= order.premiums.makerPremium) {
                 uint256 premiumIncrease = updateOrder.premium - order.premiums.makerPremium;
                 order.premiums.makerPremium = updateOrder.premium;
-                IERC20(order.metadata.collateralToken).safeTransferFrom(_msgSender(), address(this), premiumIncrease);
+                _handleCollateralTransferFrom(order.metadata.collateralToken, _msgSender(), premiumIncrease);
                 emit PremiumIncreased(orderId, updateOrder.premium);
             } else {
                 uint256 premiumDecrease = order.premiums.makerPremium - updateOrder.premium;
@@ -335,7 +339,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
                     revert Errors.OrderBook_LessThanMinCollateralAmount();
                 }
                 order.premiums.makerPremium = updateOrder.premium;
-                IERC20(order.metadata.collateralToken).safeTransfer(_msgSender(), premiumDecrease);
+                _handleCollateralTransfer(order.metadata.collateralToken, _msgSender(), premiumDecrease);
                 emit PremiumDecreased(orderId, updateOrder.premium);
             }
         }
@@ -524,7 +528,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
             _initializeMetadata(collateralToken, strike, notional, deadline, expiry, expiryType, allowed);
     }
 
-    function _handleCollateralTransfer(address collateralToken, address from, uint256 amount) internal {
+    function _handleCollateralTransferFrom(address collateralToken, address from, uint256 amount) internal {
         if (!config.tokenIsInApprovedList(collateralToken)) {
             revert Errors.OrderBook_TokenIsNotApproved();
         }
@@ -536,13 +540,17 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         }
     }
 
-    function _handleFeeTransfer(address collateralToken, uint256 notional, uint256 payOut) internal {
+    function _handleCollateralTransfer(address collateralToken, address to, uint256 amount) internal {
         if (!config.tokenIsInApprovedList(collateralToken)) {
             revert Errors.OrderBook_TokenIsNotApproved();
         }
 
-        uint256 fee = notional - payOut;
-        IERC20(collateralToken).safeTransfer(optionsFeeAddress, fee);
+        uint256 balBefore = IERC20(collateralToken).balanceOf(to);
+        IERC20(collateralToken).safeTransfer(to, amount);
+
+        if (IERC20(collateralToken).balanceOf(to) - balBefore != amount) {
+            revert Errors.OrderBook_IncorrectTransferAmount();
+        }
     }
 
     /// @dev To prevent double-initialization (reuses the owner storage slot for efficiency).
