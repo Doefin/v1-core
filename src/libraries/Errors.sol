@@ -23,6 +23,9 @@ library Errors {
     /// @notice Thrown when strike is zero
     error OrderBook_ZeroStrike();
 
+    /// @notice Thrown when the token is not approved
+    error OrderBook_TokenIsNotApproved();
+
     /// @notice Thrown when the nonce is invalid
     error OrderBook_InvalidNonce();
 
@@ -57,7 +60,7 @@ library Errors {
     error OrderBook_OrderMustBeSettled();
 
     /// @notice Thrown when the match order amount is incorrect
-    error OrderBook_UnableToMatchOrder();
+    error OrderBook_IncorrectTransferAmount();
 
     /// @notice Thrown when the order is already matched
     error OrderBook_OrderAlreadyMatched();
