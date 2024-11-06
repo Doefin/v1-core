@@ -69,6 +69,9 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
 
         nextBlockIndex = 0;
         currentBlockHeight = initialBlockHeight + NUM_OF_BLOCK_HEADERS - 1;
+        if (_config == address(0)) {
+            revert Errors.ZeroAddress();
+        }
         config = IDoefinConfig(_config);
     }
 
