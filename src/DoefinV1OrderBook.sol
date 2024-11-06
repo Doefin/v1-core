@@ -94,6 +94,10 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
 
     function matchOrder(uint256 orderId, uint256 expectedNonce) external {
         BinaryOption storage order = orders[orderId];
+        if (order.metadata.maker == _msgSender()) {
+            revert Errors.OrderBook_SelfMatchOrder();
+        }
+
         if (order.metadata.status != Status.Pending) {
             revert Errors.OrderBook_OrderMustBePending();
         }
