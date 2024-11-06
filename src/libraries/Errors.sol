@@ -83,6 +83,9 @@ library Errors {
     /// @notice Thrown when an order cannot be deleted
     error OrderBook_CannotDeleteOrder();
 
+    /// @notice Thrown when maker tries to match their order
+    error OrderBook_SelfMatchOrder();
+
     /*//////////////////////////////////////////////////////////////////////////
                               BLOCK HEADER ORACLE
     //////////////////////////////////////////////////////////////////////////*/

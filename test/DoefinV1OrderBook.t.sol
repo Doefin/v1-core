@@ -805,7 +805,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
-    function test__matchOrderWithEmptyAllowedList(uint256 strike, uint256 premium, uint256 expiry) public {
+    function test__MatchOrderWithEmptyAllowedList(uint256 strike, uint256 premium, uint256 expiry) public {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
@@ -923,7 +923,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
-    function test__matchOrderWithNonEmptyAllowedList(
+    function test__MatchOrderWithNonEmptyAllowedList(
         uint256 strike,
         uint256 premium,
         uint256 expiry,
@@ -1104,9 +1104,59 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
+    function test__MatchOrder_RevertIfCounterPartyIsMaker(
+        uint256 strike,
+        uint256 premium,
+        uint256 expiry,
+        address counterparty
+    )
+        public
+    {
+        uint256 expiry = block.timestamp + 2 days;
+
+        vm.assume(strike != 0);
+        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(counterparty == users.broker || counterparty == users.rick || counterparty == users.james);
+
+        uint256 notional = premium + ((30 * premium) / 100);
+        address[] memory allowed = new address[](3);
+        allowed[0] = users.broker;
+        allowed[1] = users.rick;
+        allowed[2] = users.james;
+
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
+
+        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
+            strike: strike,
+            premium: premium,
+            notional: notional,
+            expiry: expiry,
+            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
+            position: IDoefinV1OrderBook.Position.Below,
+            collateralToken: collateralToken,
+            deadline: 1 days,
+            allowed: allowed
+        });
+
+        uint256 orderId = orderBook.createOrder(createOrderInput);
+
+        vm.stopBroadcast();
+
+        config.removeTokenFromApprovedList(collateralToken);
+        IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
+        uint256 initialNonce = order.metadata.nonce;
+
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
+        vm.expectRevert(Errors.OrderBook_SelfMatchOrder.selector);
+        orderBook.matchOrder(orderId, initialNonce);
+        vm.stopBroadcast();
+    }
     /*//////////////////////////////////////////////////////////////
               EXERCISE ORDER
     //////////////////////////////////////////////////////////////*/
+
     function testFail__exerciseOrderWhenOrderIsNotSettled(
         uint256 strike,
         uint256 premium,
