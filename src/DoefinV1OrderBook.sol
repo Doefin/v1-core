@@ -4,13 +4,14 @@ pragma solidity ^0.8.24;
 import { Errors } from "./libraries/Errors.sol";
 import { Ownable } from "solady/contracts/auth/Ownable.sol";
 import { ERC1155 } from "solady/contracts/tokens/ERC1155.sol";
+import { ReentrancyGuard } from "solady/contracts/utils/ReentrancyGuard.sol";
 import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IDoefinV1OrderBook } from "./interfaces/IDoefinV1OrderBook.sol";
 import { IDoefinConfig } from "./interfaces/IDoefinConfig.sol";
 import { IDoefinBlockHeaderOracle } from "./interfaces/IDoefinBlockHeaderOracle.sol";
 
-contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownable {
+contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @notice Doefin Config
@@ -522,7 +523,14 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
             _initializeMetadata(collateralToken, strike, notional, deadline, expiry, expiryType, allowed);
     }
 
-    function _handleCollateralTransferFrom(address collateralToken, address from, uint256 amount) internal {
+    function _handleCollateralTransferFrom(
+        address collateralToken,
+        address from,
+        uint256 amount
+    )
+        internal
+        nonReentrant
+    {
         if (!config.tokenIsInApprovedList(collateralToken)) {
             revert Errors.OrderBook_TokenIsNotApproved();
         }
@@ -534,7 +542,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         }
     }
 
-    function _handleCollateralTransfer(address collateralToken, address to, uint256 amount) internal {
+    function _handleCollateralTransfer(address collateralToken, address to, uint256 amount) internal nonReentrant {
         if (!config.tokenIsInApprovedList(collateralToken)) {
             revert Errors.OrderBook_TokenIsNotApproved();
         }
