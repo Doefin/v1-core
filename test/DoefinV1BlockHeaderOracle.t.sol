@@ -34,6 +34,11 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
         config.setOrderBook(address(orderBook));
     }
 
+    function test_Setup_CannotDeployWithZeroConfigAddress() public {
+        vm.expectRevert(Errors.ZeroAddress.selector);
+        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886, address(0));
+    }
+
     function test_FailWithInvalidPrevBlockHash() public {
         IDoefinBlockHeaderOracle.BlockHeader memory invalidBlockHeader = IDoefinBlockHeaderOracle.BlockHeader({
             version: 0x2a000000,
