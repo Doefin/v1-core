@@ -194,7 +194,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         }
 
         address winner;
-        order.metadata.status = Status.Exercised;
         _burn(order.metadata.maker, orderId, 1);
         _burn(order.metadata.taker, orderId, 1);
         delete orders[orderId];
@@ -255,7 +254,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
             revert Errors.OrderBook_OrderMustBePending();
         }
 
-        order.metadata.status = Status.Canceled;
         _burn(order.metadata.maker, orderId, 1);
         delete orders[orderId];
 
