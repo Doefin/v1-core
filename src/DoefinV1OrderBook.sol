@@ -351,10 +351,10 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         IDoefinBlockHeaderOracle.BlockHeader memory blockHeader =
             IDoefinBlockHeaderOracle(blockHeaderOracle).getLatestBlockHeader();
 
-        uint256 len = registeredOrderIds.length;
-        for (uint256 i = 0; i < len;) {
-            uint256 orderId = registeredOrderIds[i];
+        uint256 len = orderIdCounter;
+        for (uint256 orderId = 0; orderId < len; orderId++) {
             BinaryOption storage order = orders[orderId];
+            if (order.metadata.maker == address(0)) continue;
 
             bool isMatched = order.metadata.status == Status.Matched;
             bool isPastDeadline = block.timestamp > order.metadata.deadline;
@@ -363,12 +363,9 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
             ) || (order.metadata.expiryType == ExpiryType.Timestamp && blockHeader.timestamp >= order.metadata.expiry);
 
             if (!isMatched && (isExpired || isPastDeadline)) {
+                _burn(order.metadata.maker, orderId, 1);
+                IERC20(order.metadata.collateralToken).safeTransfer(order.metadata.maker, order.premiums.makerPremium);
                 delete orders[orderId];
-                registeredOrderIds[i] = registeredOrderIds[len - 1];
-                registeredOrderIds.pop();
-                len--;
-            } else {
-                i++;
             }
         }
     }

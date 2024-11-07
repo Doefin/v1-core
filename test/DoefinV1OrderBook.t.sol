@@ -1349,6 +1349,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.exerciseOrder(orderId);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                            DELETE ORDER
+    //////////////////////////////////////////////////////////////*/
     function test_DeleteOrders_OnlyOwnerCanCall() public {
         vm.prank(users.alice);
         vm.expectRevert(Ownable.Unauthorized.selector);
@@ -1370,6 +1373,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
             IDoefinV1OrderBook.Position.Above,
             currentTimestamp + 1 hours
         );
+        address order1Maker = orderBook.getOrder(orderId1).metadata.maker;
 
         // Create an expired order (by timestamp)
         uint256 orderId2 = _createOrder(
@@ -1382,6 +1386,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
             IDoefinV1OrderBook.Position.Below,
             currentTimestamp + 1 hours
         );
+        address order2Maker = orderBook.getOrder(orderId2).metadata.maker;
 
         // Create a non-expired order
         uint256 orderId3 = _createOrder(
@@ -1402,9 +1407,11 @@ contract DoefinV1OrderBook_Test is Base_Test {
         // Verify deleted orders
         IDoefinV1OrderBook.BinaryOption memory deletedOrder1 = orderBook.getOrder(orderId1);
         assertEq(uint256(deletedOrder1.metadata.status), 0);
+        assertEq(orderBook.balanceOf(order1Maker, orderId1), 0);
 
         IDoefinV1OrderBook.BinaryOption memory deletedOrder2 = orderBook.getOrder(orderId2);
         assertEq(uint256(deletedOrder2.metadata.status), 0);
+        assertEq(orderBook.balanceOf(order2Maker, orderId2), 0);
 
         // Verify non-deleted order
         IDoefinV1OrderBook.BinaryOption memory nonDeletedOrder = orderBook.getOrder(orderId3);
