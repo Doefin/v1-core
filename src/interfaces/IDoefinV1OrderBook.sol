@@ -144,7 +144,17 @@ interface IDoefinV1OrderBook {
 
     /// @notice Emitted when a new option is created.
     /// @param id The unique identifier of the created option.
-    event OrderCreated(uint256 indexed id);
+    event OrderCreated(
+        uint256 indexed id,
+        address maker,
+        address collateralToken,
+        uint256 premium,
+        uint256 notional,
+        uint256 strike,
+        Position position,
+        uint256 expiry,
+        ExpiryType expiryType
+    );
 
     /// @notice Emitted when a new option order is matched.
     /// @param id The unique identifier of the created option.

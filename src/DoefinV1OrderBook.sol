@@ -81,7 +81,17 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         _handleCollateralTransferFrom(createOrderInput.collateralToken, _msgSender(), createOrderInput.premium);
         _mint(_msgSender(), newOrderId, 1, "");
 
-        emit OrderCreated(newOrderId);
+        emit OrderCreated(
+            newOrderId,
+            msg.sender,
+            createOrderInput.collateralToken,
+            createOrderInput.premium,
+            createOrderInput.notional,
+            createOrderInput.strike,
+            createOrderInput.position,
+            createOrderInput.expiry,
+            createOrderInput.expiryType
+        );
         return newOrderId;
     }
 
@@ -173,7 +183,17 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         _mint(order.maker, newOrderId, 1, "");
         _mint(order.taker, newOrderId, 1, "");
 
-        emit OrderCreated(newOrderId);
+        emit OrderCreated(
+            newOrderId,
+            msg.sender,
+            order.collateralToken,
+            order.premium,
+            order.notional,
+            order.strike,
+            order.position,
+            order.expiry,
+            order.expiryType
+        );
         emit OrderMatched(newOrderId, order.taker, takerPremium);
 
         return newOrderId;
@@ -330,9 +350,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
                 emit PremiumIncreased(orderId, updateOrder.premium);
             } else {
                 uint256 premiumDecrease = order.premiums.makerPremium - updateOrder.premium;
-                if (premiumDecrease < config.getApprovedToken(order.metadata.collateralToken).minCollateralAmount) {
-                    revert Errors.OrderBook_LessThanMinCollateralAmount();
-                }
                 order.premiums.makerPremium = updateOrder.premium;
                 _handleCollateralTransfer(order.metadata.collateralToken, _msgSender(), premiumDecrease);
                 emit PremiumDecreased(orderId, updateOrder.premium);

@@ -178,9 +178,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
 
-        vm.expectEmit();
-        emit IDoefinV1OrderBook.OrderCreated(0);
-
         IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
             strike: strike,
             premium: premium,
@@ -192,6 +189,19 @@ contract DoefinV1OrderBook_Test is Base_Test {
             deadline: 1 days,
             allowed: allowed
         });
+
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderCreated(
+            0,
+            users.alice,
+            createOrderInput.collateralToken,
+            createOrderInput.premium,
+            createOrderInput.notional,
+            createOrderInput.strike,
+            createOrderInput.position,
+            createOrderInput.expiry,
+            createOrderInput.expiryType
+        );
 
         uint256 orderId = orderBook.createOrder(createOrderInput);
 
@@ -338,9 +348,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
 
-        vm.expectEmit();
-        emit IDoefinV1OrderBook.OrderCreated(0);
-
         IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
             strike: strike,
             premium: premium,
@@ -352,6 +359,19 @@ contract DoefinV1OrderBook_Test is Base_Test {
             deadline: 1 days,
             allowed: allowed
         });
+
+        vm.expectEmit();
+        emit IDoefinV1OrderBook.OrderCreated(
+            0,
+            users.alice,
+            createOrderInput.collateralToken,
+            createOrderInput.premium,
+            createOrderInput.notional,
+            createOrderInput.strike,
+            createOrderInput.position,
+            createOrderInput.expiry,
+            createOrderInput.expiryType
+        );
 
         uint256 orderId = orderBook.createOrder(createOrderInput);
 
