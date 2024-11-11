@@ -1257,7 +1257,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         address winner;
         IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
-        if (order.metadata.finalStrike > order.metadata.initialStrike) {
+        if (order.metadata.finalStrike >= order.metadata.initialStrike) {
             if (order.positions.makerPosition == IDoefinV1OrderBook.Position.Above) {
                 winner = order.metadata.maker;
             } else {
@@ -1330,7 +1330,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         address winner;
         IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
-        if (order.metadata.finalStrike > order.metadata.initialStrike) {
+        if (order.metadata.finalStrike >= order.metadata.initialStrike) {
             if (order.positions.makerPosition == IDoefinV1OrderBook.Position.Above) {
                 winner = order.metadata.maker;
             } else {

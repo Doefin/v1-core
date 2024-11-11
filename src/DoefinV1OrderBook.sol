@@ -191,7 +191,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         _burn(order.metadata.taker, orderId, 1);
         delete orders[orderId];
 
-        if (order.metadata.finalStrike > order.metadata.initialStrike) {
+        if (order.metadata.finalStrike >= order.metadata.initialStrike) {
             if (order.positions.makerPosition == Position.Above) {
                 winner = order.metadata.maker;
             } else {
