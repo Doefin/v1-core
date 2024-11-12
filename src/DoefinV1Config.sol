@@ -5,7 +5,7 @@ import { Errors } from "./libraries/Errors.sol";
 import { IDoefinConfig } from "./interfaces/IDoefinConfig.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
-import { AggregatorV3Interface } from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import { AggregatorV3Interface } from "@chainlink/src/interfaces/feeds/AggregatorV3Interface.sol";
 
 /// @title DoefinV1Config
 /// @notice See the documentation in {DoefinV1Config}.
