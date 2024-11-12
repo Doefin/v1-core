@@ -11,7 +11,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
     DoefinV1OrderBook public orderBook;
     DoefinV1BlockHeaderOracle public blockHeaderOracle;
     address public collateralToken;
-    uint256 public constant minCollateralAmount = 100;
+    uint256 public minCollateralAmount;
     uint256 public constant depositBound = 5000e6;
 
     function setUp() public virtual override {
@@ -26,6 +26,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook = new DoefinV1OrderBook(address(config));
 
         config.setOrderBook(address(orderBook));
+        minCollateralAmount = config.getApprovedToken(collateralToken).minCollateralAmount
+            * (10 ** config.getApprovedToken(collateralToken).token.decimals());
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -130,7 +132,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function testFail__TransferTokenAfterCreateOrder(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -139,7 +141,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -165,11 +169,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.safeTransferFrom(users.alice, users.broker, orderId, 1, "");
     }
 
-    function test__createOrder(uint256 strike, uint256 premium, uint256 expiry, address counterparty) public {
+    function test__createOrder(uint256 strike, uint8 multiplier, uint256 expiry, address counterparty) public {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -200,7 +206,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function test__CreateOrder_RevertIfTokenIsNotApproved(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -209,7 +215,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -236,12 +244,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.createOrder(createOrderInput);
     }
 
-    function test__createAndMatchOrder(uint256 strike, uint256 premium, uint256 expiry, address counterparty) public {
+    function test__createAndMatchOrder(uint256 strike, uint8 multiplier, uint256 expiry, address counterparty) public {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 1000);
 
+        uint256 premium = minCollateralAmount; //* multiplier;
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](0);
 
@@ -325,11 +334,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         assertEq(order.premiums.takerPremium + order.premiums.makerPremium, order.premiums.notional);
     }
 
-    function test__CancelOrder(uint256 strike, uint256 premium, uint256 expiry, address counterparty) public {
+    function test__CancelOrder(uint256 strike, uint8 multiplier, uint256 expiry, address counterparty) public {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -397,11 +408,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
-    function test__UpdateOrder(uint256 strike, uint256 premium, uint256 expiry, address counterparty) public {
+    function test__UpdateOrder(uint256 strike, uint8 multiplier, uint256 expiry, address counterparty) public {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -498,7 +511,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function test__UpdateOrderDecreasePremiumAndNotional(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -507,7 +520,10 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount * 2 && premium <= depositBound);
+        //        vm.assume(premium >= minCollateralAmount * 2 && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -561,7 +577,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function test__UpdateOrder_RevertWhenPremiumExceedsNotional(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -570,7 +586,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -613,7 +631,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function test__UpdateOrder_IncrementNonce(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -622,7 +640,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -675,7 +695,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function testFail__matchOrderAfterExpiry(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -685,7 +705,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.assume(strike != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -719,7 +741,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function testFail__matchOrderWithCounterPartyNotAllowed(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -729,7 +751,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.assume(strike != 0);
         vm.assume(counterparty != address(0) && counterparty != users.broker);
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -762,7 +786,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function testFail__TransferTokenAfterMatchOrder(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -772,7 +796,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.assume(strike != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -805,11 +831,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
-    function test__MatchOrderWithEmptyAllowedList(uint256 strike, uint256 premium, uint256 expiry) public {
+    function test__MatchOrderWithEmptyAllowedList(uint256 strike, uint8 multiplier, uint256 expiry) public {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
@@ -862,7 +890,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function test__FailToMatchOrderWhenOrderIsAlreadyMatched(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -871,7 +899,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 1000);
+
+        uint256 premium = minCollateralAmount * multiplier;
         vm.assume(counterparty == users.rick || counterparty == users.james);
 
         uint256 notional = premium + ((30 * premium) / 100);
@@ -925,7 +955,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function test__MatchOrderWithNonEmptyAllowedList(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -934,7 +964,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 1000);
+
+        uint256 premium = minCollateralAmount * multiplier;
         vm.assume(counterparty == users.broker || counterparty == users.rick || counterparty == users.james);
 
         uint256 notional = premium + ((30 * premium) / 100);
@@ -992,7 +1024,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function test__MatchOrder_RevertOnInvalidNonce(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -1001,7 +1033,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -1056,7 +1090,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function test__MatchOrder_RevertOnInvalidCollateralToken(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -1065,7 +1099,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 1000);
+
+        uint256 premium = minCollateralAmount * multiplier;
         vm.assume(counterparty == users.broker || counterparty == users.rick || counterparty == users.james);
 
         uint256 notional = premium + ((30 * premium) / 100);
@@ -1106,7 +1142,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function test__MatchOrder_RevertIfCounterPartyIsMaker(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -1115,7 +1151,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 1000);
+
+        uint256 premium = minCollateralAmount * multiplier;
         vm.assume(counterparty == users.broker || counterparty == users.rick || counterparty == users.james);
 
         uint256 notional = premium + ((30 * premium) / 100);
@@ -1159,7 +1197,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function testFail__exerciseOrderWhenOrderIsNotSettled(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         address counterparty
     )
@@ -1169,7 +1207,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         vm.assume(strike != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -1205,7 +1245,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function test__exerciseOrderWhenExpiryIsBlockNumber(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         uint256 timestamp,
         address counterparty,
@@ -1220,7 +1260,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(timestamp != 0);
         vm.assume(counterparty != address(0));
         vm.assume(blockNumber > expiry);
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
@@ -1278,7 +1320,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
     function test__exerciseOrderWhenExpiryIsTimestamp(
         uint256 strike,
-        uint256 premium,
+        uint8 multiplier,
         uint256 expiry,
         uint256 timestamp,
         address counterparty,
@@ -1293,7 +1335,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(timestamp > expiry);
         vm.assume(counterparty != address(0));
         vm.assume(blockNumber != 0);
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
+        vm.assume(multiplier > 1 && multiplier <= 10);
+
+        uint256 premium = minCollateralAmount * multiplier;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
