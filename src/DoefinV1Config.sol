@@ -199,7 +199,7 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
         return uint256(price);
     }
 
-    /// @notice Get the USD value of token amount
+    /// @notice Get the USD value of token amount. The usd amount will be returned with a decimal of 8.
     /// @param token The token address
     /// @param amount The token amount
     /// @return usdValue The USD value of the tokens

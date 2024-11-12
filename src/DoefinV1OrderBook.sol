@@ -581,6 +581,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         return true;
     }
 
+    /// @dev The usdValue of the token amount and the scaledMinUsd value both have a decimal of 8,
+    /// thereby canceling each other out.
     function _amountToUsd(
         address token,
         uint256 amount
