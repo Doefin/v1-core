@@ -18,7 +18,7 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
 
     address public collateralToken;
     uint256 public constant depositBound = 5000e6;
-    uint256 public constant minCollateralAmount = 100;
+    uint256 public minCollateralAmount;
 
     function setUp() public virtual override {
         Base_Test.setUp();
@@ -32,6 +32,9 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
 
         orderBook = new DoefinV1OrderBook(address(config));
         config.setOrderBook(address(orderBook));
+
+        minCollateralAmount = config.getApprovedToken(collateralToken).minCollateralAmount
+            ** config.getApprovedToken(collateralToken).token.decimals();
     }
 
     function test_Setup_CannotDeployWithZeroConfigAddress() public {
@@ -109,8 +112,9 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
     {
         uint256 expiry = blockHeaderOracle.currentBlockHeight() + 1;
         vm.assume(strike != 0);
-        vm.assume(premium >= minCollateralAmount && premium <= depositBound);
         vm.assume(counterparty == users.broker || counterparty == users.rick || counterparty == users.james);
+
+        premium = minCollateralAmount;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](3);
