@@ -18,6 +18,7 @@
   remappings = [
     "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
     "@prb/math/=lib/prb-math/",
+    "@chainlink/src/=lib/foundry-chainlink-toolkit/src/",
     "forge-std/=lib/forge-std/src",
     "solady/contracts/=lib/solady/src/"
   ]

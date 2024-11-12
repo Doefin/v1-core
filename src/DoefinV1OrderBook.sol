@@ -350,6 +350,12 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
                 emit PremiumIncreased(orderId, updateOrder.premium);
             } else {
                 uint256 premiumDecrease = order.premiums.makerPremium - updateOrder.premium;
+
+                (uint256 usdValue, uint256 scaledMinUsd) = _amountToUsd(order.metadata.collateralToken, premiumDecrease);
+                if (usdValue < scaledMinUsd) {
+                    revert Errors.OrderBook_InvalidMinCollateralAmount();
+                }
+
                 order.premiums.makerPremium = updateOrder.premium;
                 _handleCollateralTransfer(order.metadata.collateralToken, _msgSender(), premiumDecrease);
                 emit PremiumDecreased(orderId, updateOrder.premium);
@@ -502,7 +508,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
             revert Errors.OrderBook_InvalidCollateralToken();
         }
 
-        if (premium < config.getApprovedToken(collateralToken).minCollateralAmount) {
+        (uint256 usdValue, uint256 scaledMinUsd) = _amountToUsd(collateralToken, premium);
+        if (usdValue < scaledMinUsd) {
             revert Errors.OrderBook_InvalidMinCollateralAmount();
         }
 
@@ -572,5 +579,19 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
     /// @dev To prevent double-initialization (reuses the owner storage slot for efficiency).
     function _guardInitializeOwner() internal pure virtual override(Ownable) returns (bool) {
         return true;
+    }
+
+    /// @dev The usdValue of the token amount and the scaledMinUsd value both have a decimal of 8,
+    /// thereby canceling each other out.
+    function _amountToUsd(
+        address token,
+        uint256 amount
+    )
+        internal
+        view
+        returns (uint256 usdValue, uint256 scaledMinUsd)
+    {
+        usdValue = config.getUsdValue(token, amount);
+        scaledMinUsd = config.getApprovedToken(token).minCollateralAmount * 1e8;
     }
 }

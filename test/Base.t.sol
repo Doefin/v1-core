@@ -2,12 +2,14 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import { Users } from "./utils/Types.sol";
+import { Test } from "forge-std/Test.sol";
 import { Constants } from "./utils/Constants.sol";
+import { MockToken } from "./mocks/MockToken.sol";
 import { Assertions } from "./utils/Assertions.sol";
 import { DoefinV1Config, IDoefinConfig } from "../src/DoefinV1Config.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { Test } from "forge-std/Test.sol";
+import { MockV3Aggregator } from "./mocks/MockV3Aggregator.sol";
 
 /// @notice Base test contract with common logic needed by all tests.
 abstract contract Base_Test is Test, Assertions, Constants {
@@ -25,14 +27,17 @@ abstract contract Base_Test is Test, Assertions, Constants {
     ERC20 internal dai;
     ERC20 internal usdt;
 
+    MockV3Aggregator internal daiUsdPriceFeed;
+    MockV3Aggregator internal usdcUsdPriceFeed;
+
     /*//////////////////////////////////////////////////////////////////////////
                                   SET-UP FUNCTION
     //////////////////////////////////////////////////////////////////////////*/
 
     function setUp() public virtual {
         // Deploy the base test contracts.
-        dai = new ERC20("Dai Stablecoin", "DAI");
-        usdt = new ERC20("Tether USD", "USDT");
+        dai = new MockToken("Dai Stablecoin", "DAI", 6); // new ERC20("Dai Stablecoin", "DAI");
+        usdt = new MockToken("Tether USD", "USDT", 6); // new ERC20("Tether USD", "USDT");
 
         // Label the base test contracts.
         vm.label({ account: address(dai), newLabel: "DAI" });
@@ -65,9 +70,13 @@ abstract contract Base_Test is Test, Assertions, Constants {
 
     /// @dev deploy Doefin V1 Config
     function deployConfig() public {
+        // Deploy mock price feeds
+        daiUsdPriceFeed = new MockV3Aggregator(8, 100_000_000); // $1.00
+        usdcUsdPriceFeed = new MockV3Aggregator(8, 100_000_000); // $1.00
+
         config = new DoefinV1Config();
-        config.addTokenToApprovedList(address(dai), 100);
-        config.addTokenToApprovedList(address(usdt), 100);
+        config.addTokenToApprovedList(address(dai), 100, address(daiUsdPriceFeed));
+        config.addTokenToApprovedList(address(usdt), 100, address(usdcUsdPriceFeed));
         config.setAuthorizedRelayer(users.relayer);
         vm.label({ account: address(config), newLabel: "DoefinV1Config" });
     }
