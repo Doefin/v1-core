@@ -191,7 +191,11 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
             revert Errors.Config_PriceFeedNotSet();
         }
 
-        (, int256 price,,,) = AggregatorV3Interface(_approvedTokens.priceFeed).latestRoundData();
+        (uint80 quoteRoundID, int256 price,, uint256 quoteTimestamp, uint80 quoteAnsweredInRound) =
+            AggregatorV3Interface(_approvedTokens.priceFeed).latestRoundData();
+        require(quoteAnsweredInRound >= quoteRoundID, "Stale price!");
+        require(quoteTimestamp != 0, "Round not complete!");
+
         if (price <= 0) {
             revert Errors.Config_InvalidPrice();
         }
