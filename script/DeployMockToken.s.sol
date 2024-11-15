@@ -18,8 +18,9 @@ contract DeployMockToken is BaseScript {
         address mockPriceFeed = address(new MockV3Aggregator(8, 100_000_000));
 
         mockToken = MockToken(0x1CE730de98ff5a144980D57dbfcc8d5011058aD7);
+        uint256 priceFeedHeartbeat = 24 * 60 * 60;
         DoefinV1Config(configAddress).addTokenToApprovedList(
-            address(0x1CE730de98ff5a144980D57dbfcc8d5011058aD7), 100, mockPriceFeed
+            address(0x1CE730de98ff5a144980D57dbfcc8d5011058aD7), 100, mockPriceFeed, priceFeedHeartbeat
         );
 
         vm.stopBroadcast();

@@ -20,6 +20,7 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     address public blockHeaderOracle;
     address public authorizedRelayer;
     mapping(address => OrderBook) public orderBooks;
+    mapping(address => uint256) public tokenHeartbeat;
     mapping(address => ApprovedToken) public approvedTokens;
 
     /*//////////////////////////////////////////////////////////////////////////
@@ -38,7 +39,8 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     function addTokenToApprovedList(
         address token,
         uint256 minCollateralAmount,
-        address priceFeed
+        address priceFeed,
+        uint256 priceFeedHeartbeat
     )
         external
         override
@@ -55,7 +57,8 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
         approvedTokens[token] = ApprovedToken({
             token: IERC20Metadata(token),
             minCollateralAmount: minCollateralAmount,
-            priceFeed: priceFeed
+            priceFeed: priceFeed,
+            priceFeedHeartbeat: priceFeedHeartbeat
         });
 
         emit AddTokenToApprovedList(token);
@@ -191,13 +194,13 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
             revert Errors.Config_PriceFeedNotSet();
         }
 
-        (uint80 quoteRoundID, int256 price,, uint256 quoteTimestamp, uint80 quoteAnsweredInRound) =
+        (uint80 roundID, int256 price, uint256 timestamp, uint256 updatedAt, uint80 answeredInRound) =
             AggregatorV3Interface(_approvedTokens.priceFeed).latestRoundData();
-        require(quoteTimestamp != 0, "Round not complete!");
+        if (updatedAt + _approvedTokens.priceFeedHeartbeat < block.timestamp) revert Errors.Config_StalePrice();
 
-        if (price <= 0) {
-            revert Errors.Config_InvalidPrice();
-        }
+        require(timestamp != 0, "Round not complete");
+        require(answeredInRound >= roundID, "Stale Price");
+        require(price > 0, "Invalid Price");
 
         return uint256(price);
     }

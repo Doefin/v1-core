@@ -19,8 +19,8 @@ library Errors {
     /// @notice Thrown when fee is invalid
     error Config_InvalidFee();
 
-    /// @notice Thrown when price is invalid
-    error Config_InvalidPrice();
+    /// @notice Thrown when price is stale
+    error Config_StalePrice();
 
     /// @notice Thrown when price feed is invalid
     error Config_PriceFeedNotSet();
