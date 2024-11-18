@@ -199,7 +199,6 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
         if (updatedAt + _approvedTokens.priceFeedHeartbeat < block.timestamp) revert Errors.Config_StalePrice();
 
         require(timestamp != 0, "Round not complete");
-        require(answeredInRound >= roundID, "Stale Price");
         require(price > 0, "Invalid Price");
 
         return uint256(price);
