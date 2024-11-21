@@ -75,8 +75,8 @@ abstract contract Base_Test is Test, Assertions, Constants {
         usdcUsdPriceFeed = new MockV3Aggregator(8, 100_000_000); // $1.00
 
         config = new DoefinV1Config();
-        config.addTokenToApprovedList(address(dai), 100, address(daiUsdPriceFeed), 0);
-        config.addTokenToApprovedList(address(usdt), 100, address(usdcUsdPriceFeed), 0);
+        config.addTokenToApprovedList(address(dai), 100);
+        config.addTokenToApprovedList(address(usdt), 100);
         config.setAuthorizedRelayer(users.relayer);
         vm.label({ account: address(config), newLabel: "DoefinV1Config" });
     }

@@ -303,7 +303,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
 
         vm.startBroadcast(users.relayer);
-        matchedOrder.premium = minCollateralAmount - 10;
+        matchedOrder.premium = config.getApprovedToken(collateralToken).minCollateralAmount - 10;
         vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_InvalidMinCollateralAmount.selector));
         orderBook.createAndMatchOrder(matchedOrder);
         matchedOrder.premium = premium;
