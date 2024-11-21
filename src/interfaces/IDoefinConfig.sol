@@ -51,7 +51,6 @@ interface IDoefinConfig {
 
     /// @notice Updates the token approved list
     /// @param token Token to add to the approved list
-    /// updated. E.g if the heartbeat is 24hrs, we expect the price to have been updated after then
     function addTokenToApprovedList(address token, uint256 minCollateralTokenAmount) external;
 
     /// @notice Updates the token approved list

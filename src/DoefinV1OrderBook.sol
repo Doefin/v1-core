@@ -350,7 +350,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
                 emit PremiumIncreased(orderId, updateOrder.premium);
             } else {
                 uint256 premiumDecrease = order.premiums.makerPremium - updateOrder.premium;
-                if (premiumDecrease < config.getApprovedToken(order.metadata.collateralToken).minCollateralAmount) {
+                if (updateOrder.premium < config.getApprovedToken(order.metadata.collateralToken).minCollateralAmount) {
                     revert Errors.OrderBook_LessThanMinCollateralAmount();
                 }
 

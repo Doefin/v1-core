@@ -9,7 +9,6 @@ import { Assertions } from "./utils/Assertions.sol";
 import { DoefinV1Config, IDoefinConfig } from "../src/DoefinV1Config.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import { MockV3Aggregator } from "./mocks/MockV3Aggregator.sol";
 
 /// @notice Base test contract with common logic needed by all tests.
 abstract contract Base_Test is Test, Assertions, Constants {
@@ -26,9 +25,6 @@ abstract contract Base_Test is Test, Assertions, Constants {
     IDoefinConfig internal config;
     ERC20 internal dai;
     ERC20 internal usdt;
-
-    MockV3Aggregator internal daiUsdPriceFeed;
-    MockV3Aggregator internal usdcUsdPriceFeed;
 
     /*//////////////////////////////////////////////////////////////////////////
                                   SET-UP FUNCTION
@@ -71,9 +67,6 @@ abstract contract Base_Test is Test, Assertions, Constants {
     /// @dev deploy Doefin V1 Config
     function deployConfig() public {
         // Deploy mock price feeds
-        daiUsdPriceFeed = new MockV3Aggregator(8, 100_000_000); // $1.00
-        usdcUsdPriceFeed = new MockV3Aggregator(8, 100_000_000); // $1.00
-
         config = new DoefinV1Config();
         config.addTokenToApprovedList(address(dai), 100);
         config.addTokenToApprovedList(address(usdt), 100);
