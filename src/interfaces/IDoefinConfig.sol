@@ -8,9 +8,7 @@ import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadat
 interface IDoefinConfig {
     struct ApprovedToken {
         IERC20Metadata token;
-        address priceFeed;
         uint256 minCollateralAmount;
-        uint256 priceFeedHeartbeat; //@dev get this data from chainlink feeds page: https://data.chain.link/feeds
     }
 
     struct OrderBook {
@@ -53,16 +51,8 @@ interface IDoefinConfig {
 
     /// @notice Updates the token approved list
     /// @param token Token to add to the approved list
-    /// @param priceFeed Address of the price feed
-    /// @param priceFeedHeartbeat The duration after which the price data from the price feed is expect to have been
     /// updated. E.g if the heartbeat is 24hrs, we expect the price to have been updated after then
-    function addTokenToApprovedList(
-        address token,
-        uint256 minCollateralTokenAmount,
-        address priceFeed,
-        uint256 priceFeedHeartbeat
-    )
-        external;
+    function addTokenToApprovedList(address token, uint256 minCollateralTokenAmount) external;
 
     /// @notice Updates the token approved list
     /// @param token Token to remove from the approved list
@@ -128,8 +118,4 @@ interface IDoefinConfig {
     /// @notice Return the authorized relayer address
     /// @return The authorized relayer address
     function getAuthorizedRelayer() external view returns (address);
-
-    /// @notice Return the USD value of the token
-    /// @return The USD value of the token
-    function getUsdValue(address token, uint256 amount) external view returns (uint256);
 }

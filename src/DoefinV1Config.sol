@@ -5,7 +5,6 @@ import { Errors } from "./libraries/Errors.sol";
 import { IDoefinConfig } from "./interfaces/IDoefinConfig.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20Metadata } from "@openzeppelin/contracts/interfaces/IERC20Metadata.sol";
-import { AggregatorV3Interface } from "@chainlink/src/interfaces/feeds/AggregatorV3Interface.sol";
 
 /// @title DoefinV1Config
 /// @notice See the documentation in {DoefinV1Config}.
@@ -36,17 +35,8 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
                          USER-FACING NON-CONSTANT FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
     //@@inheritdoc IDoefinConfig
-    function addTokenToApprovedList(
-        address token,
-        uint256 minCollateralAmount,
-        address priceFeed,
-        uint256 priceFeedHeartbeat
-    )
-        external
-        override
-        onlyOwner
-    {
-        if (token == address(0) || priceFeed == address(0)) {
+    function addTokenToApprovedList(address token, uint256 minCollateralAmount) external override onlyOwner {
+        if (token == address(0)) {
             revert Errors.ZeroAddress();
         }
 
@@ -54,12 +44,8 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
             revert Errors.OrderBook_InvalidMinCollateralAmount();
         }
 
-        approvedTokens[token] = ApprovedToken({
-            token: IERC20Metadata(token),
-            minCollateralAmount: minCollateralAmount,
-            priceFeed: priceFeed,
-            priceFeedHeartbeat: priceFeedHeartbeat
-        });
+        approvedTokens[token] =
+            ApprovedToken({ token: IERC20Metadata(token), minCollateralAmount: minCollateralAmount });
 
         emit AddTokenToApprovedList(token);
     }
@@ -179,39 +165,5 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     //@@inheritdoc IDoefinConfig
     function tokenIsInApprovedList(address token) public view returns (bool) {
         return address(approvedTokens[token].token) != address(0);
-    }
-
-    /*//////////////////////////////////////////////////////////////////////////
-                               PRICE  FUNCTIONS
-    //////////////////////////////////////////////////////////////////////////*/
-
-    /// @notice Get the latest USD price for a token
-    /// @param token The token address
-    /// @return price The token price in USD with 8 decimals
-    function getTokenUsdPrice(address token) public view returns (uint256) {
-        ApprovedToken memory _approvedTokens = approvedTokens[token];
-        if (_approvedTokens.priceFeed == address(0)) {
-            revert Errors.Config_PriceFeedNotSet();
-        }
-
-        (uint80 roundID, int256 price, uint256 timestamp, uint256 updatedAt, uint80 answeredInRound) =
-            AggregatorV3Interface(_approvedTokens.priceFeed).latestRoundData();
-        if (updatedAt + _approvedTokens.priceFeedHeartbeat < block.timestamp) revert Errors.Config_StalePrice();
-
-        require(timestamp != 0, "Round not complete");
-        require(price > 0, "Invalid Price");
-
-        return uint256(price);
-    }
-
-    /// @notice Get the USD value of token amount. The usd amount will be returned with a decimal of 8.
-    /// @param token The token address
-    /// @param amount The token amount
-    /// @return usdValue The USD value of the tokens
-    function getUsdValue(address token, uint256 amount) public view returns (uint256) {
-        uint256 tokenDecimals = IERC20Metadata(token).decimals();
-        uint256 price = getTokenUsdPrice(token);
-        // Price has 8 decimals, convert to common base and then to USD
-        return (amount * price) / (10 ** tokenDecimals);
     }
 }
