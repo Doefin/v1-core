@@ -4,7 +4,6 @@ pragma solidity >=0.8.19 <0.9.0;
 import { BaseScript } from "./Base.s.sol";
 import { DoefinV1Config } from "../src/DoefinV1Config.sol";
 import { MockToken } from "../test/mocks/MockToken.sol";
-import { MockV3Aggregator } from "../test/mocks/MockV3Aggregator.sol";
 
 /// @notice Deploys MockToken
 contract DeployMockToken is BaseScript {
@@ -15,13 +14,10 @@ contract DeployMockToken is BaseScript {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
         vm.startBroadcast(deployerPrivateKey);
-        address mockPriceFeed = address(new MockV3Aggregator(8, 100_000_000));
 
         mockToken = MockToken(0x1CE730de98ff5a144980D57dbfcc8d5011058aD7);
         uint256 priceFeedHeartbeat = 24 * 60 * 60;
-        DoefinV1Config(configAddress).addTokenToApprovedList(
-            address(0x1CE730de98ff5a144980D57dbfcc8d5011058aD7), 100, mockPriceFeed, priceFeedHeartbeat
-        );
+        DoefinV1Config(configAddress).addTokenToApprovedList(address(0x1CE730de98ff5a144980D57dbfcc8d5011058aD7), 100);
 
         vm.stopBroadcast();
     }

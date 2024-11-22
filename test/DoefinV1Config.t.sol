@@ -17,7 +17,7 @@ contract DoefinV1Config_Test is Base_Test {
         vm.expectRevert("Ownable: caller is not the owner");
 
         vm.prank(users.broker);
-        config.addTokenToApprovedList(address(dai), 100, address(daiUsdPriceFeed), 0);
+        config.addTokenToApprovedList(address(dai), 100);
     }
 
     function test_RemoveTokenFromApproveList_NotOwner() public {
@@ -30,7 +30,7 @@ contract DoefinV1Config_Test is Base_Test {
     function test_AddTokenToApproveList() public {
         vm.expectEmit();
         emit IDoefinConfig.AddTokenToApprovedList(address(dai));
-        config.addTokenToApprovedList(address(dai), 100, address(usdcUsdPriceFeed), 0);
+        config.addTokenToApprovedList(address(dai), 100);
     }
 
     function test_RemoveTokenFromApproveList() public {
