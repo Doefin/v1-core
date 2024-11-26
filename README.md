@@ -1,5 +1,13 @@
 # Doefin V1 Contracts
 
+### Project Setup
+Run the following command to get the repo setup
+```shell
+$ forge install
+$ forge build
+$ forge test
+```
+
 ## Project Problem Statement
 
 Doefin designed to address the challenge of establishing a trustless, decentralized financial derivative system based on
