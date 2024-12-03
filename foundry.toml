@@ -21,7 +21,7 @@
     "@chainlink/src/=lib/foundry-chainlink-toolkit/src/",
     "forge-std/=lib/forge-std/src",
     "solady/contracts/=lib/solady/src/",
-    "openzeppelin-foundry-upgrades/=lib/openzeppelin-contracts-upgradeable/src/"
+    "openzeppelin-foundry-upgrades/=lib/openzeppelin-foundry-upgrades/src/"
   ]
   ast = true
   build_info = true
