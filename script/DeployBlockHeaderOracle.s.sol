@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19 <0.9.0;
-
+import { Lib } from "./Lib.sol";
 import { BaseScript } from "./Base.s.sol";
+import { console } from "forge-std/console.sol";
 import { DoefinV1Config } from "../src/DoefinV1Config.sol";
 import { DoefinV1BlockHeaderOracle } from "../src/DoefinV1BlockHeaderOracle.sol";
 import { IDoefinBlockHeaderOracle } from "../src/interfaces/IDoefinBlockHeaderOracle.sol";
+import { Defender, DefenderOptions } from "openzeppelin-foundry-upgrades/Defender.sol";
 
 /// @dev Reverts if any contract has already been deployed.
 contract DeployBlockHeaderOracle is BaseScript {
@@ -21,6 +23,18 @@ contract DeployBlockHeaderOracle is BaseScript {
         DoefinV1Config(configAddress).setBlockHeaderOracle(address(blockHeaderOracle));
 
         vm.stopBroadcast();
+    }
+
+    function runWithDefender(address configAddress) public virtual returns (address blockHeaderOracle) {
+        DefenderOptions memory opts;
+        opts.salt = Lib._generateSalt(msg.sender);
+
+        initialBlockHeight = 864_536;
+        bytes memory constructorArgs = abi.encode(setupInitialBlocks(), initialBlockHeight, configAddress);
+        blockHeaderOracle = Defender.deployContract("DoefinV1BlockHeaderOracle.sol", constructorArgs, opts);
+        console.log("Deployed contract to address: ", blockHeaderOracle);
+
+        return blockHeaderOracle;
     }
 
     function setupInitialBlocks() internal returns (IDoefinBlockHeaderOracle.BlockHeader[17] memory blockHeaders) {
