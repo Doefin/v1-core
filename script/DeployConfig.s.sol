@@ -5,9 +5,8 @@ import { BaseScript } from "./Base.s.sol";
 import { Lib } from "./Lib.sol";
 import { DoefinV1Config } from "../src/DoefinV1Config.sol";
 
-import {console} from "forge-std/console.sol";
-import {Defender, DefenderOptions} from "openzeppelin-foundry-upgrades/Defender.sol";
-
+import { console } from "forge-std/console.sol";
+import { Defender, DefenderOptions } from "openzeppelin-foundry-upgrades/Defender.sol";
 
 contract DeployConfig is BaseScript {
     address public feeAddress;

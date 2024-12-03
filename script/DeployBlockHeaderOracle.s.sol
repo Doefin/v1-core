@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19 <0.9.0;
+
 import { Lib } from "./Lib.sol";
 import { BaseScript } from "./Base.s.sol";
 import { console } from "forge-std/console.sol";
