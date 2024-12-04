@@ -13,14 +13,22 @@ import { Defender, DefenderOptions } from "openzeppelin-foundry-upgrades/Defende
 contract DeployBlockHeaderOracle is BaseScript {
     uint256 public initialBlockHeight;
 
-    function run(address configAddress, address owner) public virtual returns (DoefinV1BlockHeaderOracle blockHeaderOracle) {
+    function run(
+        address configAddress,
+        address owner
+    )
+        public
+        virtual
+        returns (DoefinV1BlockHeaderOracle blockHeaderOracle)
+    {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
         vm.startBroadcast(deployerPrivateKey);
 
         initialBlockHeight = 864_536;
 
-        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), initialBlockHeight, configAddress, owner);
+        blockHeaderOracle =
+            new DoefinV1BlockHeaderOracle(setupInitialBlocks(), initialBlockHeight, configAddress, owner);
         DoefinV1Config(configAddress).setBlockHeaderOracle(address(blockHeaderOracle));
 
         vm.stopBroadcast();

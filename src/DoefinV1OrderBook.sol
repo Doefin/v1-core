@@ -44,7 +44,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGu
         _;
     }
 
-    constructor(address _config, address owner) ERC1155("")  {
+    constructor(address _config, address owner) ERC1155("") {
         if (_config == address(0)) {
             revert Errors.ZeroAddress();
         }
