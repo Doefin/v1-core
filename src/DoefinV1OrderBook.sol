@@ -2,16 +2,15 @@
 pragma solidity 0.8.24;
 
 import { Errors } from "./libraries/Errors.sol";
-import { Ownable } from "solady/contracts/auth/Ownable.sol";
-import { ERC1155 } from "solady/contracts/tokens/ERC1155.sol";
-import { ReentrancyGuard } from "solady/contracts/utils/ReentrancyGuard.sol";
-import { ERC2771Context } from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import { ERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IDoefinV1OrderBook } from "./interfaces/IDoefinV1OrderBook.sol";
 import { IDoefinConfig } from "./interfaces/IDoefinConfig.sol";
 import { IDoefinBlockHeaderOracle } from "./interfaces/IDoefinBlockHeaderOracle.sol";
 
-contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownable, ReentrancyGuard {
+contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     /// @notice Doefin Config
@@ -45,11 +44,11 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         _;
     }
 
-    constructor(address _config) ERC1155() ERC2771Context(IDoefinConfig(_config).getTrustedForwarder()) {
+    constructor(address _config, address owner) ERC1155("")  {
         if (_config == address(0)) {
             revert Errors.ZeroAddress();
         }
-        _initializeOwner(msg.sender);
+        _transferOwnership(owner);
         config = IDoefinConfig(_config);
         blockHeaderOracle = config.getBlockHeaderOracle();
         optionsFeeAddress = config.getFeeAddress();
@@ -398,12 +397,9 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
                                 INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
 
-    function _useBeforeTokenTransfer() internal pure override returns (bool) {
-        return true;
-    }
-
     //@inheritdoc
     function _beforeTokenTransfer(
+        address operator,
         address from,
         address to,
         uint256[] memory ids,
@@ -571,10 +567,5 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, ERC2771Context, Ownab
         if (IERC20(collateralToken).balanceOf(to) - balBefore != amount) {
             revert Errors.OrderBook_IncorrectTransferAmount();
         }
-    }
-
-    /// @dev To prevent double-initialization (reuses the owner storage slot for efficiency).
-    function _guardInitializeOwner() internal pure virtual override(Ownable) returns (bool) {
-        return true;
     }
 }

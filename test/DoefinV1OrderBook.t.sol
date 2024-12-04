@@ -19,11 +19,11 @@ contract DoefinV1OrderBook_Test is Base_Test {
         Base_Test.deployConfig();
 
         collateralToken = address(dai);
-        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886, address(config));
+        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886, address(config), msg.sender);
 
         config.setFeeAddress(users.feeAddress);
         config.setBlockHeaderOracle(address(blockHeaderOracle));
-        orderBook = new DoefinV1OrderBook(address(config));
+        orderBook = new DoefinV1OrderBook(address(config), address(this));
 
         config.setOrderBook(address(orderBook));
         minCollateralAmount = config.getApprovedToken(collateralToken).minCollateralAmount
@@ -1418,7 +1418,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
     //////////////////////////////////////////////////////////////*/
     function test_DeleteOrders_OnlyOwnerCanCall() public {
         vm.prank(users.alice);
-        vm.expectRevert(Ownable.Unauthorized.selector);
+        vm.expectRevert("Ownable: caller is not the owner");
         orderBook.deleteOrders();
     }
 

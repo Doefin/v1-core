@@ -27,8 +27,9 @@ contract DoefinV1Config is IDoefinConfig, Ownable {
     //////////////////////////////////////////////////////////////////////////*/
 
     /// @dev Initializes the factor and it's owner contract
-    constructor() Ownable() {
+    constructor(address owner) {
         fee = 100; // Set default fee to 1% (100 basis points)
+        _transferOwnership(owner);
     }
 
     /*//////////////////////////////////////////////////////////////////////////

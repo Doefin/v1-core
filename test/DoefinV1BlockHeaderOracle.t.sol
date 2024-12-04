@@ -27,10 +27,10 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
         collateralToken = address(dai);
         config.setFeeAddress(users.feeAddress);
 
-        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886, address(config));
+        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886, address(config), msg.sender);
         config.setBlockHeaderOracle(address(blockHeaderOracle));
 
-        orderBook = new DoefinV1OrderBook(address(config));
+        orderBook = new DoefinV1OrderBook(address(config), msg.sender);
         config.setOrderBook(address(orderBook));
 
         minCollateralAmount = config.getApprovedToken(collateralToken).minCollateralAmount
@@ -39,7 +39,7 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
 
     function test_Setup_CannotDeployWithZeroConfigAddress() public {
         vm.expectRevert(Errors.ZeroAddress.selector);
-        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886, address(0));
+        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886, address(0), msg.sender);
     }
 
     function test_FailWithInvalidPrevBlockHash() public {

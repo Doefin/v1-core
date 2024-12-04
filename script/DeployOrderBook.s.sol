@@ -13,22 +13,22 @@ import { DoefinV1Config } from "../src/DoefinV1Config.sol";
 import { Defender, DefenderOptions } from "openzeppelin-foundry-upgrades/Defender.sol";
 
 contract DeployOrderBook is BaseScript {
-    function run(address configAddress) public virtual returns (DoefinV1OrderBook orderBook) {
+    function run(address configAddress, address owner) public virtual returns (DoefinV1OrderBook orderBook) {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
         vm.startBroadcast(deployerPrivateKey);
 
-        orderBook = new DoefinV1OrderBook(configAddress);
+        orderBook = new DoefinV1OrderBook(configAddress, owner);
         DoefinV1Config(configAddress).setOrderBook(address(orderBook));
 
         vm.stopBroadcast();
     }
 
-    function runWithDefender(address configAddress) public virtual returns (address blockHeaderOracle) {
+    function runWithDefender(address configAddress, address owner) public virtual returns (address blockHeaderOracle) {
         DefenderOptions memory opts;
         opts.salt = Lib._generateSalt(msg.sender);
 
-        bytes memory constructorArgs = abi.encode(configAddress);
+        bytes memory constructorArgs = abi.encode(configAddress, owner);
         blockHeaderOracle = Defender.deployContract("DoefinV1OrderBook.sol", constructorArgs, opts);
         console.log("Deployed contract to address: ", blockHeaderOracle);
 

@@ -57,7 +57,8 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
     constructor(
         IDoefinBlockHeaderOracle.BlockHeader[NUM_OF_BLOCK_HEADERS] memory initialBlockHistory,
         uint256 initialBlockHeight,
-        address _config
+        address _config,
+        address owner
     ) {
         for (uint256 i = 0; i < NUM_OF_BLOCK_HEADERS; ++i) {
             BlockHeader memory blockHeader = initialBlockHistory[i];
@@ -73,6 +74,7 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
             revert Errors.ZeroAddress();
         }
         config = IDoefinConfig(_config);
+        _transferOwnership(owner);
     }
 
     /// @inheritdoc IDoefinBlockHeaderOracle
