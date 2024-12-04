@@ -8,19 +8,10 @@
     "url": "https://predexyo.com/"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "4.9.2",
-    "@prb/math": "4.0.x",
     "axios": "^1.7.7",
     "delay": "^6.0.0"
   },
   "devDependencies": {
-    "@prb/test": "0.6.4",
-    "forge-std": "github:foundry-rs/forge-std#v1.5.6",
-    "husky": "^9.1.1",
-    "prettier": "^2.8.8",
-    "solady": "0.0.129",
-    "solarray": "github:evmcheb/solarray#a547630",
-    "solhint": "^4.0.0"
   },
   "files": [
     "artifacts",
@@ -49,9 +40,6 @@
     "vesting",
     "web3"
   ],
-  "peerDependencies": {
-    "@prb/math": "4.0.x"
-  },
   "publishConfig": {
     "access": "public"
   },

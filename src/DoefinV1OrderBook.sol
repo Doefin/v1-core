@@ -3,7 +3,7 @@ pragma solidity 0.8.24;
 
 import { Errors } from "./libraries/Errors.sol";
 import { ERC1155 } from "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
-import { ReentrancyGuard } from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 import { IERC20, SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { IDoefinV1OrderBook } from "./interfaces/IDoefinV1OrderBook.sol";
@@ -44,11 +44,10 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGu
         _;
     }
 
-    constructor(address _config, address owner) ERC1155("") {
+    constructor(address _config, address owner) Ownable(owner) ERC1155("") {
         if (_config == address(0)) {
             revert Errors.ZeroAddress();
         }
-        _transferOwnership(owner);
         config = IDoefinConfig(_config);
         blockHeaderOracle = config.getBlockHeaderOracle();
         optionsFeeAddress = config.getFeeAddress();
@@ -396,25 +395,6 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGu
     /*//////////////////////////////////////////////////////////////////////////
                                 INTERNAL FUNCTIONS
     //////////////////////////////////////////////////////////////////////////*/
-
-    //@inheritdoc
-    function _beforeTokenTransfer(
-        address operator,
-        address from,
-        address to,
-        uint256[] memory ids,
-        uint256[] memory amounts,
-        bytes memory data
-    )
-        internal
-        override
-    {
-        //if `from` is zero (mint) and `to` is zero (burn) this checked will be skipped.
-        //Otherwise the action is a transfer, and it will revert
-        if (from != address(0) && to != address(0)) {
-            revert Errors.OrderBook_OptionTokenTransferNotAllowed();
-        }
-    }
 
     /**
      * @dev Register an order for settlement in the options manager
