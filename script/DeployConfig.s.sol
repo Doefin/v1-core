@@ -11,14 +11,14 @@ import { Defender, DefenderOptions } from "openzeppelin-foundry-upgrades/Defende
 contract DeployConfig is BaseScript {
     address public feeAddress;
 
-    function run() public virtual returns (DoefinV1Config config) {
+    function run(address owner) public virtual returns (DoefinV1Config config) {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
 
         vm.startBroadcast(deployerPrivateKey);
 
         feeAddress = 0x94c5D1D0E682ebEfcfFfeF1645f40947E572e54a;
 
-        config = new DoefinV1Config();
+        config = new DoefinV1Config(owner);
         config.setFeeAddress(feeAddress);
 
         vm.stopBroadcast();

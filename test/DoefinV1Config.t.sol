@@ -5,6 +5,7 @@ import { Base_Test } from "./Base.t.sol";
 import { Test } from "forge-std/Test.sol";
 import { IDoefinConfig } from "../src/interfaces/IDoefinConfig.sol";
 import { Errors } from "../src/libraries/Errors.sol";
+import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @title DoefinV1Config_Test
 contract DoefinV1Config_Test is Base_Test {
@@ -14,14 +15,14 @@ contract DoefinV1Config_Test is Base_Test {
     }
 
     function test_AddTokenToApproveList_NotOwner() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.broker));
 
         vm.prank(users.broker);
         config.addTokenToApprovedList(address(dai), 100);
     }
 
     function test_RemoveTokenFromApproveList_NotOwner() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.broker));
 
         vm.prank(users.broker);
         config.removeTokenFromApprovedList(address(dai));
@@ -40,7 +41,8 @@ contract DoefinV1Config_Test is Base_Test {
     }
 
     function test_SetFee_NotOwner() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.broker));
+
         vm.prank(users.broker);
         config.setFee(200);
     }
@@ -59,7 +61,8 @@ contract DoefinV1Config_Test is Base_Test {
     }
 
     function test_SetOrderBook_NotOwner() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.broker));
+
         vm.prank(users.broker);
         config.setOrderBook(address(1));
     }
@@ -78,7 +81,8 @@ contract DoefinV1Config_Test is Base_Test {
     }
 
     function test_SetFeeAddress_NotOwner() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.broker));
+
         vm.prank(users.broker);
         config.setFeeAddress(address(1));
     }
@@ -97,7 +101,8 @@ contract DoefinV1Config_Test is Base_Test {
     }
 
     function test_SetBlockHeaderOracle_NotOwner() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.broker));
+
         vm.prank(users.broker);
         config.setBlockHeaderOracle(address(1));
     }
@@ -116,7 +121,8 @@ contract DoefinV1Config_Test is Base_Test {
     }
 
     function test_SetTrustedForwarder_NotOwner() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.broker));
+
         vm.prank(users.broker);
         config.setTrustedForwarder(address(1));
     }
@@ -135,7 +141,8 @@ contract DoefinV1Config_Test is Base_Test {
     }
 
     function test_SetAuthorizedRelayer_NotOwner() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.broker));
+
         vm.prank(users.broker);
         config.setAuthorizedRelayer(address(1));
     }

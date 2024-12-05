@@ -67,7 +67,7 @@ abstract contract Base_Test is Test, Assertions, Constants {
     /// @dev deploy Doefin V1 Config
     function deployConfig() public {
         // Deploy mock price feeds
-        config = new DoefinV1Config();
+        config = new DoefinV1Config(address(this));
         config.addTokenToApprovedList(address(dai), 100);
         config.addTokenToApprovedList(address(usdt), 100);
         config.setAuthorizedRelayer(users.relayer);

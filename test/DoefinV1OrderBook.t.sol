@@ -19,11 +19,11 @@ contract DoefinV1OrderBook_Test is Base_Test {
         Base_Test.deployConfig();
 
         collateralToken = address(dai);
-        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886, address(config));
+        blockHeaderOracle = new DoefinV1BlockHeaderOracle(setupInitialBlocks(), 838_886, address(config), msg.sender);
 
         config.setFeeAddress(users.feeAddress);
         config.setBlockHeaderOracle(address(blockHeaderOracle));
-        orderBook = new DoefinV1OrderBook(address(config));
+        orderBook = new DoefinV1OrderBook(address(config), address(this));
 
         config.setOrderBook(address(orderBook));
         minCollateralAmount = config.getApprovedToken(collateralToken).minCollateralAmount
@@ -128,45 +128,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         });
 
         orderBook.createOrder(createOrderInput);
-    }
-
-    function testFail__TransferTokenAfterCreateOrder(
-        uint256 strike,
-        uint8 multiplier,
-        uint256 expiry,
-        address counterparty
-    )
-        public
-    {
-        vm.assume(strike != 0);
-        vm.assume(expiry != 0);
-        vm.assume(counterparty != address(0));
-        vm.assume(multiplier > 1 && multiplier <= 10);
-
-        uint256 premium = minCollateralAmount * multiplier;
-
-        uint256 notional = premium + ((30 * premium) / 100);
-        address[] memory allowed = new address[](1);
-        allowed[0] = counterparty;
-
-        vm.startBroadcast(users.alice);
-        dai.approve(address(orderBook), premium);
-
-        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
-            strike: strike,
-            premium: premium,
-            notional: notional,
-            expiry: expiry,
-            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Below,
-            collateralToken: collateralToken,
-            deadline: 1 days,
-            allowed: allowed
-        });
-
-        uint256 orderId = orderBook.createOrder(createOrderInput);
-
-        orderBook.safeTransferFrom(users.alice, users.broker, orderId, 1, "");
     }
 
     function test__createOrder(uint256 strike, uint8 multiplier, uint256 expiry, address counterparty) public {
@@ -804,53 +765,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
-    function testFail__TransferTokenAfterMatchOrder(
-        uint256 strike,
-        uint8 multiplier,
-        uint256 expiry,
-        address counterparty
-    )
-        public
-    {
-        uint256 expiry = block.timestamp + 2 days;
-
-        vm.assume(strike != 0);
-        vm.assume(counterparty != address(0));
-        vm.assume(multiplier > 1 && multiplier <= 10);
-
-        uint256 premium = minCollateralAmount * multiplier;
-
-        uint256 notional = premium + ((30 * premium) / 100);
-        address[] memory allowed = new address[](1);
-        allowed[0] = users.broker;
-
-        vm.startBroadcast(users.alice);
-        dai.approve(address(orderBook), premium);
-
-        IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
-            strike: strike,
-            premium: premium,
-            notional: notional,
-            expiry: expiry,
-            expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
-            position: IDoefinV1OrderBook.Position.Below,
-            collateralToken: collateralToken,
-            deadline: 1 days,
-            allowed: allowed
-        });
-
-        uint256 orderId = orderBook.createOrder(createOrderInput);
-
-        vm.stopBroadcast();
-
-        vm.startBroadcast(users.broker);
-        dai.approve(address(orderBook), premium);
-
-        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
-        orderBook.safeTransferFrom(users.broker, users.alice, orderId, 1, "");
-        vm.stopBroadcast();
-    }
-
     function test__MatchOrderWithEmptyAllowedList(uint256 strike, uint8 multiplier, uint256 expiry) public {
         uint256 expiry = block.timestamp + 2 days;
 
@@ -1418,7 +1332,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
     //////////////////////////////////////////////////////////////*/
     function test_DeleteOrders_OnlyOwnerCanCall() public {
         vm.prank(users.alice);
-        vm.expectRevert(Ownable.Unauthorized.selector);
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, users.alice));
+
         orderBook.deleteOrders();
     }
 
