@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.24;
-
 import "../interfaces/IDoefinBlockHeaderOracle.sol";
 
 /// @title BlockHeaderUtils
 /// @notice Library that implements utils for bitcoin block header hashing
 library BlockHeaderUtils {
+    uint256 public constant BASE_DIFFICULTY_TARGET = 0x00000000FFFF << 208;
+
     /**
      * @dev Return true/false if the block header hash is valid
      * @param currentBlockHeader The block header to hash
@@ -128,6 +129,18 @@ library BlockHeaderUtils {
         } else {
             return coefficient << (8 * (exponent - 3)); //coefficient * 2 ^ (8 * (exponent - 3))
         }
+    }
+
+    /**
+     * @dev Calculates the difficulty of a block header
+     * @param blockHeader The block header to hash
+     * @return the difficulty
+     * @notice The difficulty is calculated as the ratio of the base target to the block target.
+     * The base target is a constant value defined in the contract and the block target is calculated
+     * from the block header nBits value.
+     */
+    function calculateDifficulty(IDoefinBlockHeaderOracle.BlockHeader memory blockHeader) public view returns (uint256) {
+        return BASE_DIFFICULTY_TARGET / calculateDifficultyTarget(blockHeader);
     }
 
     function swap(uint256[11] memory array, uint256 i, uint256 j) internal pure {

@@ -1,7 +1,7 @@
 const axios= require('axios');
 // const delay = require('delay');
 
-const startingBlockNumber = 864553;
+const startingBlockNumber = 879647;
 const numberOfBlocks = 1;
 
 async function fetchBlock(blockNumber) {

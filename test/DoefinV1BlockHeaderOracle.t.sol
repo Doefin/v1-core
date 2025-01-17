@@ -301,4 +301,14 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
         uint256 expectedMedian = initialBlockHeaders[16].timestamp;
         assertEq(medianTime, expectedMedian);
     }
+
+    function test_CalculateDifficulty() public {
+        uint256 expectedDiff = 86388558925171;
+        IDoefinBlockHeaderOracle.BlockHeader[18] memory nextBlocks = getNextBlocks();
+
+        for(uint256 i = 0; i < nextBlocks.length;i++) {
+            uint256 difficulty = BlockHeaderUtils.calculateDifficulty(nextBlocks[i]);
+            assertEq(difficulty, expectedDiff);
+        }
+    }
 }
