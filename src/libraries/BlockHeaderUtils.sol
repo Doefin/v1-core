@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.24;
+
 import "../interfaces/IDoefinBlockHeaderOracle.sol";
 
 /// @title BlockHeaderUtils
@@ -139,7 +140,11 @@ library BlockHeaderUtils {
      * The base target is a constant value defined in the contract and the block target is calculated
      * from the block header nBits value.
      */
-    function calculateDifficulty(IDoefinBlockHeaderOracle.BlockHeader memory blockHeader) public view returns (uint256) {
+    function calculateDifficulty(IDoefinBlockHeaderOracle.BlockHeader memory blockHeader)
+        public
+        view
+        returns (uint256)
+    {
         return BASE_DIFFICULTY_TARGET / calculateDifficultyTarget(blockHeader);
     }
 

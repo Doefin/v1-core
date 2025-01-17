@@ -303,10 +303,10 @@ contract DoefinV1BlockHeaderOracle_Test is Base_Test {
     }
 
     function test_CalculateDifficulty() public {
-        uint256 expectedDiff = 86388558925171;
+        uint256 expectedDiff = 86_388_558_925_171;
         IDoefinBlockHeaderOracle.BlockHeader[18] memory nextBlocks = getNextBlocks();
 
-        for(uint256 i = 0; i < nextBlocks.length;i++) {
+        for (uint256 i = 0; i < nextBlocks.length; i++) {
             uint256 difficulty = BlockHeaderUtils.calculateDifficulty(nextBlocks[i]);
             assertEq(difficulty, expectedDiff);
         }
