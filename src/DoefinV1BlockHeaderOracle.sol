@@ -152,7 +152,7 @@ contract DoefinV1BlockHeaderOracle is IDoefinBlockHeaderOracle, Ownable {
         IDoefinV1OrderBook(orderBook).settleOrder(
             settlementBlock.blockNumber,
             settlementBlock.timestamp,
-            BlockHeaderUtils.calculateDifficultyTarget(settlementBlock)
+            BlockHeaderUtils.calculateDifficulty(settlementBlock)
         );
     }
 
