@@ -165,6 +165,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
             createOrderInput.premium,
             createOrderInput.notional,
             createOrderInput.strike,
+            createOrderInput.deadline,
             createOrderInput.position,
             createOrderInput.expiry,
             createOrderInput.expiryType
@@ -340,6 +341,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
             createOrderInput.premium,
             createOrderInput.notional,
             createOrderInput.strike,
+            createOrderInput.deadline,
             createOrderInput.position,
             createOrderInput.expiry,
             createOrderInput.expiryType
@@ -439,7 +441,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.expectEmit();
         emit IDoefinV1OrderBook.OrderDeadlineUpdated(orderId, updateParams.deadline);
         vm.expectEmit();
-        emit IDoefinV1OrderBook.OrderPositionUpdated(orderId, updateParams.position);
+        emit IDoefinV1OrderBook.OrderPositionUpdated(orderId, updateParams.position, IDoefinV1OrderBook.Position.Below);
         vm.expectEmit();
         emit IDoefinV1OrderBook.OrderExpiryUpdated(orderId, updateParams.expiry, updateParams.expiryType);
         vm.expectEmit();
@@ -455,6 +457,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         assertEq(updatedOrder.premiums.notional, updateParams.notional);
         assertEq(updatedOrder.premiums.makerPremium, updateParams.premium);
         assertEq(uint8(updatedOrder.positions.makerPosition), uint8(updateParams.position));
+        assertEq(uint8(updatedOrder.positions.takerPosition), uint8(IDoefinV1OrderBook.Position.Below));
         assertEq(updatedOrder.metadata.expiry, updateParams.expiry);
         assertEq(uint8(updatedOrder.metadata.expiryType), uint8(updateParams.expiryType));
         assertEq(updatedOrder.metadata.allowed.length, updateParams.allowed.length);
@@ -833,7 +836,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 expiry = block.timestamp + 2 days;
 
         vm.assume(strike != 0);
-        vm.assume(multiplier > 1 && multiplier <= 1000);
+        bound(multiplier, 1, 1000);
 
         uint256 premium = minCollateralAmount * multiplier;
         vm.assume(counterparty == users.rick || counterparty == users.james);
