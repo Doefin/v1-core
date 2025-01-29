@@ -151,6 +151,7 @@ interface IDoefinV1OrderBook {
         uint256 premium,
         uint256 notional,
         uint256 strike,
+        uint256 deadline,
         Position position,
         uint256 expiry,
         ExpiryType expiryType
@@ -202,8 +203,9 @@ interface IDoefinV1OrderBook {
 
     /// @notice Emitted when a maker's order position is updated
     /// @param id The order id
-    /// @param position The maker's new position
-    event OrderPositionUpdated(uint256 indexed id, Position position);
+    /// @param makerPosition The maker's new position
+    /// @param takerPosition The taker's new position
+    event OrderPositionUpdated(uint256 indexed id, Position makerPosition, Position takerPosition);
 
     /// @notice Emitted when a order's deadline is updated
     /// @param id The order id

@@ -20,7 +20,7 @@ function formatBlockHeader(block) {
     prevBlockHash: `0x${block.prev_block}`,
     merkleRootHash: `0x${block.mrkl_root}`,
     timestamp: Math.floor(new Date(block.time).getTime() / 1000),
-    nBits: block.bits,
+    nBits: `0x${block.bits.toString(16)}`,
     nonce: block.nonce,
     blockHash: `0x${block.hash}`,
     blockNumber: block.height

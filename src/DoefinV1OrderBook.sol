@@ -86,6 +86,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGu
             createOrderInput.premium,
             createOrderInput.notional,
             createOrderInput.strike,
+            createOrderInput.deadline,
             createOrderInput.position,
             createOrderInput.expiry,
             createOrderInput.expiryType
@@ -188,6 +189,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGu
             order.premium,
             order.notional,
             order.strike,
+            0,
             order.position,
             order.expiry,
             order.expiryType
@@ -318,8 +320,9 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGu
 
         // Update position
         if (updateOrder.position != order.positions.makerPosition) {
+            order.positions.takerPosition = order.positions.makerPosition;
             order.positions.makerPosition = updateOrder.position;
-            emit OrderPositionUpdated(orderId, updateOrder.position);
+            emit OrderPositionUpdated(orderId, updateOrder.position, order.positions.takerPosition);
         }
 
         // Update expiry
