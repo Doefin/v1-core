@@ -304,6 +304,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGu
         if (updateOrder.notional != 0) {
             uint256 prevNotional = order.premiums.notional;
             order.premiums.notional = updateOrder.notional;
+            order.metadata.payOut = _calculatePayOut(updateOrder.notional);
 
             if (updateOrder.notional > prevNotional) {
                 emit NotionalIncreased(orderId, updateOrder.notional);
@@ -457,7 +458,7 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGu
             collateralToken: collateralToken,
             initialStrike: strike,
             finalStrike: 0,
-            payOut: notional - (notional * config.getFee() / 10_000),
+            payOut: _calculatePayOut(notional),
             expiry: expiry,
             expiryType: expiryType,
             deadline: deadline,
@@ -550,5 +551,9 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGu
         if (IERC20(collateralToken).balanceOf(to) - balBefore != amount) {
             revert Errors.OrderBook_IncorrectTransferAmount();
         }
+    }
+
+    function _calculatePayOut(uint256 notional) internal view returns (uint256) {
+        return notional - (notional * config.getFee() / 10_000);
     }
 }

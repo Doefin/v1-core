@@ -465,6 +465,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
         assertEq(updatedOrder.metadata.allowed[1], updateParams.allowed[1]);
         assertEq(updatedOrder.metadata.initialStrike, updateParams.strike);
 
+        assertEq(updatedOrder.metadata.payOut, _calculatePayOut(updateParams.notional));
+
         vm.stopBroadcast();
 
         // Revert if caller is not maker
@@ -554,6 +556,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.updateOrder(orderId, updateParams);
 
         IDoefinV1OrderBook.BinaryOption memory updatedOrder = orderBook.getOrder(orderId);
+
+        assertEq(updatedOrder.metadata.payOut, _calculatePayOut(updateParams.notional));
         assertEq(updatedOrder.premiums.notional, updateParams.notional);
         assertEq(updatedOrder.premiums.makerPremium, updateParams.premium);
         vm.stopBroadcast();
@@ -1504,5 +1508,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         uint256 orderId = orderBook.createOrder(input);
         vm.stopPrank();
         return orderId;
+    }
+
+    function _calculatePayOut(uint256 notional) internal view returns (uint256) {
+        return notional - (notional * config.getFee() / 10_000);
     }
 }
