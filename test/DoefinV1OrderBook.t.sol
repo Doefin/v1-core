@@ -34,7 +34,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
                       CREATE ORDER
     //////////////////////////////////////////////////////////////*/
 
-    function testFail__createOrderWithZeroStrike(
+    function test__RevertCreateOrderWithZeroStrike(
         uint256 strike,
         uint256 premium,
         uint256 expiry,
@@ -42,17 +42,19 @@ contract DoefinV1OrderBook_Test is Base_Test {
     )
         public
     {
-        vm.assume(strike == 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount);
 
+        premium = minCollateralAmount;
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
         allowed[0] = counterparty;
 
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
+
         IDoefinV1OrderBook.CreateOrderInput memory createOrderInput = IDoefinV1OrderBook.CreateOrderInput({
-            strike: strike,
+            strike: 0,
             premium: premium,
             notional: notional,
             expiry: expiry,
@@ -63,10 +65,12 @@ contract DoefinV1OrderBook_Test is Base_Test {
             allowed: allowed
         });
 
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_ZeroStrike.selector));
         orderBook.createOrder(createOrderInput);
+        vm.stopBroadcast();
     }
 
-    function testFail__createOrderWithAmountLessThanMinStrike(
+    function test__RevertCreateOrderWithPremiumLessThanMinCollateral(
         uint256 strike,
         uint256 premium,
         uint256 expiry,
@@ -77,7 +81,11 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.assume(strike != 0);
         vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium < minCollateralAmount);
+
+        premium = config.getApprovedToken(collateralToken).minCollateralAmount - 1;
+
+        vm.startBroadcast(users.alice);
+        dai.approve(address(orderBook), premium);
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -95,10 +103,12 @@ contract DoefinV1OrderBook_Test is Base_Test {
             allowed: allowed
         });
 
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_InvalidMinCollateralAmount.selector));
         orderBook.createOrder(createOrderInput);
+        vm.stopBroadcast();
     }
 
-    function testFail__createOrderWithZeroExpiry(
+    function test__RevertCreateOrderWithZeroExpiry(
         uint256 strike,
         uint256 premium,
         uint256 expiry,
@@ -107,10 +117,9 @@ contract DoefinV1OrderBook_Test is Base_Test {
         public
     {
         vm.assume(strike != 0);
-        vm.assume(expiry == 0);
         vm.assume(counterparty != address(0));
-        vm.assume(premium >= minCollateralAmount);
 
+        premium = minCollateralAmount;
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
         allowed[0] = counterparty;
@@ -119,7 +128,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
             strike: strike,
             premium: premium,
             notional: notional,
-            expiry: expiry,
+            expiry: 0,
             expiryType: IDoefinV1OrderBook.ExpiryType.BlockNumber,
             position: IDoefinV1OrderBook.Position.Below,
             collateralToken: collateralToken,
@@ -127,6 +136,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
             allowed: allowed
         });
 
+        vm.expectRevert(Errors.OrderBook_ZeroExpiry.selector);
         orderBook.createOrder(createOrderInput);
     }
 
@@ -682,7 +692,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
                   MATCH ORDER
     //////////////////////////////////////////////////////////////*/
 
-    function testFail__matchOrderAfterExpiry(
+    function test__RevertMatchOrderAfterExpiry(
         uint256 strike,
         uint8 multiplier,
         uint256 expiry,
@@ -718,20 +728,23 @@ contract DoefinV1OrderBook_Test is Base_Test {
         });
 
         uint256 orderId = orderBook.createOrder(createOrderInput);
+        uint256 nonce = orderBook.getOrder(orderId).metadata.nonce;
 
         vm.stopBroadcast();
 
         vm.startBroadcast(users.broker);
-        vm.warp(block.timestamp + 3 days);
         dai.approve(address(orderBook), premium);
-        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
+        vm.warp(block.timestamp + 3 days);
+
+        vm.expectRevert(Errors.OrderBook_OrderExpired.selector);
+        orderBook.matchOrder(orderId, nonce);
+
         vm.stopBroadcast();
     }
 
-    function testFail__matchOrderWithCounterPartyNotAllowed(
+    function test__RevertMatchOrderWithCounterPartyNotAllowed(
         uint256 strike,
         uint8 multiplier,
-        uint256 expiry,
         address counterparty
     )
         public
@@ -746,7 +759,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
-        allowed[0] = counterparty;
+        allowed[0] = users.broker;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
@@ -764,12 +777,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         });
 
         uint256 orderId = orderBook.createOrder(createOrderInput);
-
+        uint256 nonce = orderBook.getOrder(orderId).metadata.nonce;
         vm.stopBroadcast();
 
-        vm.startBroadcast(users.broker);
+        vm.startBroadcast(users.james);
         dai.approve(address(orderBook), premium);
-        orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
+        vm.expectRevert(Errors.OrderBook_MatchOrderNotAllowed.selector);
+        orderBook.matchOrder(orderId, nonce);
         vm.stopBroadcast();
     }
 
@@ -840,11 +854,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
     {
         uint256 expiry = block.timestamp + 2 days;
 
-        vm.assume(strike != 0);
-        bound(multiplier, 1, 1000);
+        bound(strike, 1_000_000, 1_000_000_000);
+        bound(multiplier, 2, 1000);
 
-        uint256 premium = minCollateralAmount * multiplier;
-        vm.assume(counterparty == users.rick || counterparty == users.james);
+        uint256 premium = minCollateralAmount * 10;
+
+        strike = 1_000_000;
+        counterparty == users.rick;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](3);
@@ -1137,7 +1153,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
               EXERCISE ORDER
     //////////////////////////////////////////////////////////////*/
 
-    function testFail__exerciseOrderWhenOrderIsNotSettled(
+    function test__RevertExerciseOrderWhenOrderIsNotSettled(
         uint256 strike,
         uint8 multiplier,
         uint256 expiry,
@@ -1182,6 +1198,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.matchOrder(orderId, orderBook.getOrder(orderId).metadata.nonce);
         vm.stopBroadcast();
 
+        vm.expectRevert(abi.encodeWithSelector(Errors.OrderBook_OrderMustBeSettled.selector));
         orderBook.exerciseOrder(orderId);
     }
 
