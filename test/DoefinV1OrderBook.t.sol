@@ -667,6 +667,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.updateOrder(orderId, updateParams);
         order = orderBook.getOrder(orderId);
         assertEq(order.metadata.nonce, initialNonce + 1);
+        assertEq(order.metadata.payOut, _calculatePayOut(updateParams.notional));
 
         updateParams.premium = premium + (premium / 10);
         dai.approve(address(orderBook), updateParams.premium);
