@@ -116,6 +116,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGu
             revert Errors.OrderBook_OrderAlreadyMatched();
         }
 
+        _verifyExpiry(order.metadata.expiryType, order.metadata.expiry);
+
         address[] memory allowed = order.metadata.allowed;
         if (allowed.length > 0) {
             bool isAllowed = false;
@@ -328,6 +330,8 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGu
 
         // Update expiry
         if (updateOrder.expiry != 0) {
+            _verifyExpiry(updateOrder.expiryType, updateOrder.expiry);
+
             order.metadata.expiry = updateOrder.expiry;
             order.metadata.expiryType = updateOrder.expiryType;
             emit OrderExpiryUpdated(orderId, updateOrder.expiry, updateOrder.expiryType);
@@ -555,5 +559,19 @@ contract DoefinV1OrderBook is IDoefinV1OrderBook, ERC1155, Ownable, ReentrancyGu
 
     function _calculatePayOut(uint256 notional) internal view returns (uint256) {
         return notional - (notional * config.getFee() / 10_000);
+    }
+
+    function _verifyExpiry(IDoefinV1OrderBook.ExpiryType expiryType, uint256 expiry) internal view {
+        IDoefinBlockHeaderOracle.BlockHeader memory blockHeader =
+            IDoefinBlockHeaderOracle(blockHeaderOracle).getLatestBlockHeader();
+        if (expiryType == ExpiryType.BlockNumber) {
+            if (blockHeader.blockNumber >= expiry) {
+                revert Errors.OrderBook_OrderExpired();
+            }
+        } else {
+            if (blockHeader.timestamp >= expiry) {
+                revert Errors.OrderBook_OrderExpired();
+            }
+        }
     }
 }
