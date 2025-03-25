@@ -34,21 +34,14 @@ contract DoefinV1OrderBook_Test is Base_Test {
                       CREATE ORDER
     //////////////////////////////////////////////////////////////*/
 
-    function test__RevertCreateOrderWithZeroStrike(
-        uint256 strike,
-        uint256 premium,
-        uint256 expiry,
-        address counterparty
-    )
-        public
-    {
-        vm.assume(expiry != 0);
+    function test__RevertCreateOrderWithZeroStrike(uint256 strike, uint256 premium, address counterparty) public {
         vm.assume(counterparty != address(0));
 
         premium = minCollateralAmount;
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
         allowed[0] = counterparty;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
@@ -73,15 +66,14 @@ contract DoefinV1OrderBook_Test is Base_Test {
     function test__RevertCreateOrderWithPremiumLessThanMinCollateral(
         uint256 strike,
         uint256 premium,
-        uint256 expiry,
         address counterparty
     )
         public
     {
         vm.assume(strike != 0);
-        vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
 
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
         premium = config.getApprovedToken(collateralToken).minCollateralAmount - 1;
 
         vm.startBroadcast(users.alice);
@@ -108,14 +100,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
-    function test__RevertCreateOrderWithZeroExpiry(
-        uint256 strike,
-        uint256 premium,
-        uint256 expiry,
-        address counterparty
-    )
-        public
-    {
+    function test__RevertCreateOrderWithZeroExpiry(uint256 strike, uint256 premium, address counterparty) public {
         vm.assume(strike != 0);
         vm.assume(counterparty != address(0));
 
@@ -140,13 +125,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.createOrder(createOrderInput);
     }
 
-    function test__createOrder(uint256 strike, uint8 multiplier, uint256 expiry, address counterparty) public {
+    function test__createOrder(uint256 strike, uint8 multiplier, address counterparty) public {
         vm.assume(strike != 0);
-        vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
         vm.assume(multiplier > 1 && multiplier <= 10);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -182,24 +167,36 @@ contract DoefinV1OrderBook_Test is Base_Test {
         );
 
         uint256 orderId = orderBook.createOrder(createOrderInput);
+        IDoefinV1OrderBook.BinaryOption memory order = orderBook.getOrder(orderId);
 
         assertEq(orderBook.balanceOf(users.alice, orderId), 1);
+        assertEq(order.metadata.nonce, 0);
+        assertEq(order.metadata.payOut, _calculatePayOut(notional));
+        assertEq(order.metadata.expiry, createOrderInput.expiry);
+        assertEq(order.metadata.collateralToken, createOrderInput.collateralToken);
+        assertEq(order.metadata.maker, users.alice);
+        assertEq(order.metadata.taker, address(0));
+        assertEq(order.metadata.initialStrike, strike);
+        assertEq(order.metadata.finalStrike, 0);
+        assertEq(order.metadata.deadline, createOrderInput.deadline);
+        assertEq(order.metadata.allowed, createOrderInput.allowed);
+        assertEq(uint256(order.metadata.status), uint256(IDoefinV1OrderBook.Status.Pending));
+        assertEq(uint8(order.metadata.expiryType), uint8(createOrderInput.expiryType));
     }
 
     function test__CreateOrder_RevertIfTokenIsNotApproved(
         uint256 strike,
         uint8 multiplier,
-        uint256 expiry,
         address counterparty
     )
         public
     {
         vm.assume(strike != 0);
-        vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
         vm.assume(multiplier > 1 && multiplier <= 10);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -226,13 +223,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         orderBook.createOrder(createOrderInput);
     }
 
-    function test__createAndMatchOrder(uint256 strike, uint8 multiplier, uint256 expiry, address counterparty) public {
+    function test__createAndMatchOrder(uint256 strike, uint8 multiplier, address counterparty) public {
         vm.assume(strike != 0);
-        vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
         vm.assume(multiplier > 1 && multiplier <= 1000);
 
-        uint256 premium = minCollateralAmount; //* multiplier;
+        uint256 premium = minCollateralAmount;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](0);
 
@@ -316,12 +313,12 @@ contract DoefinV1OrderBook_Test is Base_Test {
         assertEq(order.premiums.takerPremium + order.premiums.makerPremium, order.premiums.notional);
     }
 
-    function test__CancelOrder(uint256 strike, uint8 multiplier, uint256 expiry, address counterparty) public {
+    function test__CancelOrder(uint256 strike, uint8 multiplier, address counterparty) public {
         vm.assume(strike != 0);
-        vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
         vm.assume(multiplier > 1 && multiplier <= 10);
 
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
         uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
@@ -401,12 +398,12 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
-    function test__UpdateOrder(uint256 strike, uint8 multiplier, uint256 expiry, address counterparty) public {
+    function test__UpdateOrder(uint256 strike, uint8 multiplier, address counterparty) public {
         vm.assume(strike != 0);
-        vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
         vm.assume(multiplier > 1 && multiplier <= 10);
 
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
         uint256 premium = minCollateralAmount * multiplier;
 
         uint256 notional = premium + ((30 * premium) / 100);
@@ -435,7 +432,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         updateParams.notional = notional + (notional / 10); // Increase notional by 10%
         updateParams.premium = premium + (premium / 20); // Increase premium by 5%
         updateParams.position = IDoefinV1OrderBook.Position.Above;
-        updateParams.expiry = 10;
+        updateParams.expiry = blockHeaderOracle.getLatestBlockHeader().timestamp + 10;
         updateParams.expiryType = IDoefinV1OrderBook.ExpiryType.Timestamp;
         address[] memory newAllowed = new address[](2);
         newAllowed[0] = users.broker;
@@ -508,18 +505,16 @@ contract DoefinV1OrderBook_Test is Base_Test {
     function test__UpdateOrderDecreasePremiumAndNotional(
         uint256 strike,
         uint8 multiplier,
-        uint256 expiry,
         address counterparty
     )
         public
     {
         vm.assume(strike != 0);
-        vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
-        //        vm.assume(premium >= minCollateralAmount * 2 && premium <= depositBound);
         vm.assume(multiplier > 1 && multiplier <= 10);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -549,7 +544,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
         updateParams.notional = notional - (notional / 10); // Decrease notional by 10%
         updateParams.premium = premium - (premium / 2); // Decrease premium by 20%
         updateParams.position = IDoefinV1OrderBook.Position.Above;
-        updateParams.expiry = 10;
+        updateParams.expiry = blockHeaderOracle.getLatestBlockHeader().timestamp + 1 days;
         updateParams.expiryType = IDoefinV1OrderBook.ExpiryType.Timestamp;
         address[] memory newAllowed = new address[](2);
         newAllowed[0] = users.broker;
@@ -576,17 +571,16 @@ contract DoefinV1OrderBook_Test is Base_Test {
     function test__UpdateOrder_RevertWhenPremiumExceedsNotional(
         uint256 strike,
         uint8 multiplier,
-        uint256 expiry,
         address counterparty
     )
         public
     {
         vm.assume(strike != 0);
-        vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
         vm.assume(multiplier > 1 && multiplier <= 10);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -627,20 +621,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
-    function test__UpdateOrder_IncrementNonce(
-        uint256 strike,
-        uint8 multiplier,
-        uint256 expiry,
-        address counterparty
-    )
-        public
-    {
+    function test__UpdateOrder_IncrementNonce(uint256 strike, uint8 multiplier, address counterparty) public {
         vm.assume(strike != 0);
-        vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
         vm.assume(multiplier > 1 && multiplier <= 10);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -692,21 +679,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
                   MATCH ORDER
     //////////////////////////////////////////////////////////////*/
 
-    function test__RevertMatchOrderAfterExpiry(
-        uint256 strike,
-        uint8 multiplier,
-        uint256 expiry,
-        address counterparty
-    )
-        public
-    {
-        uint256 expiry = block.timestamp + 2 days;
-
+    function test__RevertMatchOrderAfterExpiry(uint256 strike, uint8 multiplier, address counterparty) public {
         vm.assume(strike != 0);
         vm.assume(counterparty != address(0));
         vm.assume(multiplier > 1 && multiplier <= 10);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -749,13 +728,12 @@ contract DoefinV1OrderBook_Test is Base_Test {
     )
         public
     {
-        uint256 expiry = block.timestamp + 2 days;
-
         vm.assume(strike != 0);
         vm.assume(counterparty != address(0) && counterparty != users.broker);
         vm.assume(multiplier > 1 && multiplier <= 10);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -788,12 +766,11 @@ contract DoefinV1OrderBook_Test is Base_Test {
     }
 
     function test__MatchOrderWithEmptyAllowedList(uint256 strike, uint8 multiplier, uint256 expiry) public {
-        uint256 expiry = block.timestamp + 2 days;
-
         vm.assume(strike != 0);
         vm.assume(multiplier > 1 && multiplier <= 10);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         vm.startBroadcast(users.alice);
         dai.approve(address(orderBook), premium);
@@ -847,17 +824,15 @@ contract DoefinV1OrderBook_Test is Base_Test {
     function test__FailToMatchOrderWhenOrderIsAlreadyMatched(
         uint256 strike,
         uint8 multiplier,
-        uint256 expiry,
         address counterparty
     )
         public
     {
-        uint256 expiry = block.timestamp + 2 days;
-
         bound(strike, 1_000_000, 1_000_000_000);
         bound(multiplier, 2, 1000);
 
         uint256 premium = minCollateralAmount * 10;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         strike = 1_000_000;
         counterparty == users.rick;
@@ -911,20 +886,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         vm.stopBroadcast();
     }
 
-    function test__MatchOrderWithNonEmptyAllowedList(
-        uint256 strike,
-        uint8 multiplier,
-        uint256 expiry,
-        address counterparty
-    )
-        public
-    {
-        uint256 expiry = block.timestamp + 2 days;
-
+    function test__MatchOrderWithNonEmptyAllowedList(uint256 strike, uint8 multiplier, address counterparty) public {
         vm.assume(strike != 0);
         vm.assume(multiplier > 1 && multiplier <= 1000);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
+
         vm.assume(counterparty == users.broker || counterparty == users.rick || counterparty == users.james);
 
         uint256 notional = premium + ((30 * premium) / 100);
@@ -980,20 +948,13 @@ contract DoefinV1OrderBook_Test is Base_Test {
         assertEq(order.premiums.takerPremium + order.premiums.makerPremium, order.premiums.notional);
     }
 
-    function test__MatchOrder_RevertOnInvalidNonce(
-        uint256 strike,
-        uint8 multiplier,
-        uint256 expiry,
-        address counterparty
-    )
-        public
-    {
+    function test__MatchOrder_RevertOnInvalidNonce(uint256 strike, uint8 multiplier, address counterparty) public {
         vm.assume(strike != 0);
-        vm.assume(expiry != 0);
         vm.assume(counterparty != address(0));
         vm.assume(multiplier > 1 && multiplier <= 10);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -1049,17 +1010,15 @@ contract DoefinV1OrderBook_Test is Base_Test {
     function test__MatchOrder_RevertOnInvalidCollateralToken(
         uint256 strike,
         uint8 multiplier,
-        uint256 expiry,
         address counterparty
     )
         public
     {
-        uint256 expiry = block.timestamp + 2 days;
-
         vm.assume(strike != 0);
         vm.assume(multiplier > 1 && multiplier <= 1000);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
         vm.assume(counterparty == users.broker || counterparty == users.rick || counterparty == users.james);
 
         uint256 notional = premium + ((30 * premium) / 100);
@@ -1101,17 +1060,15 @@ contract DoefinV1OrderBook_Test is Base_Test {
     function test__MatchOrder_RevertIfCounterPartyIsMaker(
         uint256 strike,
         uint8 multiplier,
-        uint256 expiry,
         address counterparty
     )
         public
     {
-        uint256 expiry = block.timestamp + 2 days;
-
         vm.assume(strike != 0);
         vm.assume(multiplier > 1 && multiplier <= 1000);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
         vm.assume(counterparty == users.broker || counterparty == users.rick || counterparty == users.james);
 
         uint256 notional = premium + ((30 * premium) / 100);
@@ -1156,18 +1113,16 @@ contract DoefinV1OrderBook_Test is Base_Test {
     function test__RevertExerciseOrderWhenOrderIsNotSettled(
         uint256 strike,
         uint8 multiplier,
-        uint256 expiry,
         address counterparty
     )
         public
     {
-        uint256 expiry = block.timestamp + 2 days;
-
         vm.assume(strike != 0);
         vm.assume(counterparty != address(0));
         vm.assume(multiplier > 1 && multiplier <= 10);
 
         uint256 premium = minCollateralAmount * multiplier;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         uint256 notional = premium + ((30 * premium) / 100);
         address[] memory allowed = new address[](1);
@@ -1205,7 +1160,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
     function test__exerciseOrderWhenExpiryIsBlockNumber(
         uint256 strike,
         uint8 multiplier,
-        uint256 expiry,
         uint256 timestamp,
         address counterparty,
         uint256 blockNumber,
@@ -1213,7 +1167,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
     )
         public
     {
-        uint256 expiry = block.timestamp + 2 days;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         vm.assume(strike != 0);
         vm.assume(timestamp != 0);
@@ -1280,7 +1234,6 @@ contract DoefinV1OrderBook_Test is Base_Test {
     function test__exerciseOrderWhenExpiryIsTimestamp(
         uint256 strike,
         uint8 multiplier,
-        uint256 expiry,
         uint256 timestamp,
         address counterparty,
         uint256 blockNumber,
@@ -1288,7 +1241,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
     )
         public
     {
-        uint256 expiry = block.timestamp + 2 days;
+        uint256 expiry = blockHeaderOracle.getLatestBlockHeader().timestamp + 2 days;
 
         vm.assume(strike != 0);
         vm.assume(timestamp > expiry);
@@ -1363,7 +1316,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
     }
 
     function test_DeleteOrders_DeletesExpiredUnmatchedOrders() public {
-        uint256 currentBlockNumber = blockHeaderOracle.currentBlockHeight(); //().blockNumber;
+        uint256 currentBlockNumber = blockHeaderOracle.currentBlockHeight();
         uint256 currentTimestamp = block.timestamp;
 
         // Create an expired order (by block number)
@@ -1423,8 +1376,8 @@ contract DoefinV1OrderBook_Test is Base_Test {
     }
 
     function test_DeleteOrders_DoesNotDeleteMatchedOrders() public {
-        uint256 currentBlockNumber = blockHeaderOracle.currentBlockHeight();
         uint256 currentTimestamp = block.timestamp;
+        uint256 expiry = blockHeaderOracle.currentBlockHeight() + 10;
 
         // Create an expired matched order
         uint256 orderId = _createOrder(
@@ -1432,7 +1385,7 @@ contract DoefinV1OrderBook_Test is Base_Test {
             1000,
             minCollateralAmount,
             minCollateralAmount * 2,
-            currentBlockNumber - 1,
+            expiry,
             IDoefinV1OrderBook.ExpiryType.BlockNumber,
             IDoefinV1OrderBook.Position.Above,
             currentTimestamp + 1 hours
